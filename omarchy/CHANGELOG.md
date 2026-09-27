@@ -2,6 +2,22 @@
 
 改动日志（倒序，最新在上）。提交代码时同步更新本节。
 
+## 2026-09-27 — bar 组件 `coding-sparrow.systempulse` 移除
+
+- `shell.json` 的 bar 段删掉该组件（连同 `checkConnectivity` / `compactBar` / `notifications` / `showCpu` 等它自己的配置）。
+- 同一次提交里带上了 lock-explorer 插件条目的归一化：`boot: follow` 是默认值，键被省掉（`omarchy-shell lock setBoot` 的写入结果），语义不变。
+
+## 2026-09-27 — 开机解密屏的钟变活（bootclock 注入 + 快照不再烤钟）
+
+- **问题**：解密屏 = 锁屏整屏快照，屏上 `00:11 / Tuesday, 22 September` 是抓图那一刻的死像素，永远停在旧时间。
+- **注入**：新增 mkinitcpio hook `bootclock`（`/etc/initcpio/{hooks,install}/bootclock`；`/etc/mkinitcpio.conf.d/zz-bootclock.conf` 把它外科式插进 `HOOKS` 的 `plymouth` 之前——不整份覆盖，`omarchy_hooks.conf` 里有 NVIDIA 摘 `kms` 的条件）。`run_hook` 用 `date` 把本次启动时间**幂等**写进主题键文件的 `[script-env-vars]`，Plymouth 脚本插件把它注入成全局变量，生成器再用 `Image.Text` 画回原位。**Plymouth 没有时间 API**（`plugin.c` 只挂 Image/Sprite/Plymouth/Math/String），注入是唯一路。
+- **不烤钟**：`lock-designs/SplitJianlong.qml` 底部那列时钟加 `visible: !lock.snapshotMode`，抓快照时不进底图（否则活钟压在死钟上）。
+- **几何**：`~/.config/omarchy/bootclock/my-splitjianlong.conf`——**不能**放 `lock-designs/`（该目录任何文件都会被当设计扫描，触发 `failed to load design` 并让抓取静默回退到内置 Split，藏钟失效）。值量自快照：左 3.04%、时分 81.76%/133pt、日期 92.61%/32pt（Plymouth 字号 ≈ ink 像素高，sprite 顶到 ink 顶 ≈ 0.33×字号）。
+- **字体**：设计用 `Style.font.family` + DemiBold，本机该族只有 Regular（`fc-match 'monospace:weight=demibold'` 仍返回 Regular）、Qt 靠**合成**加粗 → 脚本把同一串文字按 2px 对角线画 4 次模拟。
+- **三个坑**：① initramfs 的 busybox **没有 `date`** applet（`/usr/lib/initcpio/busybox --list` 里没有）→ `install/bootclock` 里 `add_binary date`；② 变量缺失时 `Image.Text` 渲染成 **`#NULL`**（不是空串）→ 借插件既有的 `emit_downward_gate`，按 `Plymouth.GetMode()` 在 `reboot`/`shutdown` 关掉 sprite；③ boot 页 `Follow my lock screen` 是勾选框，点掉即回退出厂主题（并真跑一次重建）。
+- **触发重抓**：插件 IPC 未暴露该函数（只在 QML 里）→ 换壁纸即自动（`Service.qml` 的 background resync，8s 后重抓）；或在 boot 页按 Apply。
+- **文档**：`omarchy-plugins.md` §8.6 增「屏上的钟是活的」；装机清单、踩坑、VM 验证法、回退见 `agent-scratch/bootclock-live-clock.md`。
+
 ## 2026-09-25 — bar 五彩琉璃环可开关（菜单 Style › Menu Bar › Border Ring）
 
 - **浮栏五彩环接入 + 可开关**：`charlieras262.floating-bar` 的 `barBackground` 换 `BorderSurface`、描一圈与聚焦窗口同源的 `hyprlandActiveSpec` 渐变，宽度运行时 probe `general:border_size`（细节 `omarchy-visual-tweaks.md` §7.2/§7.4）。新增开关，**只关 bar、不动窗口与弹层边框**。

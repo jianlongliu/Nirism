@@ -23,7 +23,12 @@ DesignBase {
     onPositionChanged: lock.wakeRequested()
   }
 
+  // Hidden while the explorer renders a boot snapshot: the decrypt screen
+  // draws this clock live from the bootclock hook ([script-env-vars] ->
+  // generate.sh), and a baked-in copy would sit frozen underneath it forever.
+  // The real lock screen keeps the clock.
   Column {
+    visible: !lock.snapshotMode
     anchors.left: parent.left
     anchors.bottom: parent.bottom
     anchors.leftMargin: 72

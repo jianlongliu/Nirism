@@ -225,3 +225,30 @@ o.bind("SUPER + L", "Lock system", "omarchy-system-lock")
 -- 布局切换随后挪到 CTRL+SUPER+L（原来是锁屏），与上面互换。
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + CTRL + L", "Toggle workspace layout", "omarchy-hyprland-workspace-layout-toggle")
+
+-- ==== Fathom（mtolhuys）：按"多久没用过"排深度的 Alt+Tab ====
+-- 插件本体已 enable（io.github.mtolhuys.fathom），这段只负责把它的
+-- hypr/fathom.lua 读进来。那块脚本自己会 hl.unbind("ALT + TAB") 和
+-- ("ALT + SHIFT + TAB")——出厂 tiling.lua 各绑了两条（cycle_next +
+-- bring_to_top）——再重绑到 fathom 的 next/previous，按住 Alt 期间进
+-- `fathom` submap、松开立刻 reset，所以 ALT+F4、ALT+SPACE 这些别的
+-- Alt 快捷键只在"按住 Alt 时"被让位，平时不受影响。
+-- 本机原有的两条 Alt 绑定（ALT+SPACE = Spotlight、ALT+F4 = 关窗）不含
+-- Tab，脚本也没碰，不受影响。
+-- 块内自带存在性检查：插件被 disable / remove 后整段空转，Alt+Tab 自动
+-- 回到出厂行为，不需要手改回来。重新加载配置（保存本文件或
+-- `hyprctl reload`）即生效。
+-- 注意：别用 `hyprctl eval` 单独喂这块——Hyprland 0.56.2 的 Lua 重载有
+-- 崩溃史（见插件 docs/HYPRLAND-0.56.2-LUA-RELOAD-CRASH.md），插件的
+-- bin/load-bindings 才做安全校验（--check 可查 Alt+Tab 归属）。
+-- 卸载：删掉下面 fathom: begin 到 fathom: end 整块即可。
+-- fathom: begin
+do
+  local fathom = os.getenv("HOME") .. "/.config/omarchy/plugins/io.github.mtolhuys.fathom/hypr/fathom.lua"
+  local file = io.open(fathom, "r")
+  if file then
+    file:close()
+    pcall(dofile, fathom)
+  end
+end
+-- fathom: end

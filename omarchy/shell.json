@@ -20,15 +20,6 @@
           "size": 16
         },
         {
-          "checkConnectivity": true,
-          "compactBar": false,
-          "id": "coding-sparrow.systempulse",
-          "notifications": true,
-          "showCpu": true,
-          "showGpu": false,
-          "showMem": false
-        },
-        {
           "id": "jianlongliu.keyboard-layout"
         },
         {
@@ -132,12 +123,9 @@
   },
   "plugins": [
     {
-      "boot": "snapshot:my-splitjianlong",
+      "id": "io.github.sirjul1337.lock-explorer",
       "design": "my-splitjianlong",
-      "id": "io.github.sirjul1337.lock-explorer"
-    },
-    {
-      "id": "andreconde.quick-look"
+      "boot": "follow"
     },
     {
       "id": "io.github.jonhenshaw.voxtype-prism"
@@ -156,6 +144,9 @@
     },
     {
       "id": "io.github.claudsondouglas.arcdock"
+    },
+    {
+      "id": "io.github.mtolhuys.fathom"
     }
   ],
   "version": 1

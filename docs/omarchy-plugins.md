@@ -1,6 +1,6 @@
 # Omarchy 本机插件参考
 
-> 最后核对：2026-09-25 · Omarchy 4.0.4 / Hyprland 0.56.2
+> 最后核对：2026-09-26 · Omarchy 4.0.4 / Hyprland 0.56.2
 > 作用：记录本机**主动安装/克隆且当前启用**的 Omarchy shell 插件清单、目录结构与常用管理命令。此文档按真实 `shell.json` + `omarchy plugin list` 同步。系统自带的 first-party `omarchy.*` 为只读内置，禁用/移除项均不在此文档。
 > 注意：niri 化的 scrolloverview 是 **Hyprland 原生插件**（`hyprpm` 管理），**不在此文档**（Omarchy shell 插件）范围内，详见 `omarchy-nirification.md`。
 
@@ -93,10 +93,9 @@ omarchy refresh shell      # 恢复默认 shell 配置(自动备份)
 | `jianlongliu.system-update` | My Omarchy update | bar-widget | **克隆自 omarchy.system-update**（上游现位于 `bar/widgets/`） |
 | `jianlongliu.workspaces` | My Workspaces | bar-widget | **克隆自 omarchy.workspaces**（上游现位于 `bar/widgets/`），GNOME 45 圆点/胶囊指示器；2026-09-10 修 hovered undefined 警告（补丁清单见 §8.1） |
 | `io.github.sirjul1337.lock-explorer` | Lock Screen Explorer | service,overlay | **克隆自 omarchy.lock**，design=`my-splitjianlong`（split 的用户设计副本，只改显示名为 "Jianlong Liu"）、`boot=follow`（开机解密屏= `snapshot:my-splitjianlong`，见 §8.6）；头像走 `lock-avatar.png`；`plymouth/custom/generate.sh` 有本地定制补丁（清单见 §8.1）；boot 预览图由 `plymouth/previews.sh` 生成（启动日志判读见 §8.2） |
-| `coding-sparrow.systempulse` | System Pulse | bar-widget | CPU/状态 |
-| `andreconde.quick-look` | Quick Look | overlay | 快速预览 |
+| `io.github.claudsondouglas.arcdock` | Arc Dock | service,panel | macOS 风格程序坞；图标主题 `MacTahoe` 只服务它 + Nautilus；设置面板的 layer_rule 见 `omarchy-visual-tweaks.md` §3.3⑥，操作要点（灰齿轮 = `xdg-desktop-portal-gtk`、改完插件必 `omarchy restart shell`）见 `arc-dock-notes.md` |
+| `io.github.mtolhuys.fathom` | Fathom | overlay | **Alt+Tab 换成深度式窗口切换器**（按"多久没用过"排 z 轴 + 工作区小地图）；本体不写文件、不起子进程。绑定挂载 + IPC + 验证见 **§5.1** |
 | `io.github.jonhenshaw.voxtype-prism` | Voxtype Prism | service,panel | 语音 |
-| `io.github.lijiawei0305-pixel.mihomo` | Mihomo | service,bar-widget | 代理；**当前 disabled**（bar 未挂载）。本地 svc null 判空防御补丁（清单见 §8.1） |
 | `io.github.sahzudin.omarchy-screenshot-manager` | Screenshot Manager | bar-widget | 截图管理 |
 | `io.github.majesticio.clipboard-button` | Clipboard Button | bar-widget | 剪贴板 |
 | `srozen.ufw` | Firewall | bar-widget | ufw 防火墙 |
@@ -110,8 +109,29 @@ omarchy refresh shell      # 恢复默认 shell 配置(自动备份)
 
 > **4.0.3 插件沙箱约束（装任何第三方 service 类插件前先看）**：`firstPartyServiceFor(...)` 只发给 `kinds` 含 `bar` 的插件；即便拿到 `PluginFirstPartyServiceApi`，也只暴露 `stayAwake/enabled/doNotDisturb/activePlayer/sourcePlayers`——**拿不到 notifications/media 的 `popupModel`/`hasMedia`/`playerForKey` 等完整接口**。照内部宽松 API 写的插件在公开版会「装上但功能失效」。
 
-> 目录里另有**已装未启用**的：`io.github.lijiawei0305-pixel.mihomo`、`local.opencode-go-usage`、`io.github.brukb.omarchy-zerotier`（不计入上表）。
+> 目录里另有**已装未启用**的（2026-09-26 核对）：`local.opencode-go-usage`、`io.github.brukb.omarchy-zerotier`、`jianlongliu.audio`、`jianlongliu.bluetooth`、`jianlongliu.network`（后三个是留档的克隆，出厂原版在 bar 上，故不启用）——均不计入上表。
 > 另有**已移除的旧克隆**改名留守（`plugins/.jianlongliu.menu.removed-*`、`.jianlongliu.menu.bak-*`）：点号开头，rescan 不识别，不算已装。
+
+### 5.1 Fathom：Alt+Tab 深度切换器
+
+| 项 | 值 |
+|---|---|
+| 插件 | `io.github.mtolhuys.fathom`（third-party，kind = `overlay`，已 enable） |
+| 上游 | `github.com/mtolhuys/fathom`（git 管理，跟作者走；跟踪法见 §9.2） |
+| 占用的键 | `ALT+TAB` / `ALT+SHIFT+TAB`（出厂是 `cycle_next` + `bring_to_top`，`tiling.lua:44-47` 各挂两条） |
+| 挂载点 | `~/.config/hypr/bindings.lua` 末尾的 `fathom: begin … fathom: end` 块（`pcall(dofile, …)` 读插件的 `hypr/fathom.lua`）——**属 Hyprland 侧配置，不在 `shell.json` 里** |
+| 卸载 | `omarchy plugin remove io.github.mtolhuys.fathom` + 删掉该块 + `hyprctl reload` |
+
+- 插件本体**不写文件、不起子进程**，只在打开时抓窗口画面（存内存）；按住 Alt 期间进 `fathom` submap、松开 `reset`，所以 `ALT+F4`（关窗）/`ALT+SPACE`（Spotlight）只在按住那会儿让位。
+- `bindings.lua` 的块自带**存在性检查**：插件被 disable / remove 后整段空转 → Alt+Tab 自动回出厂，不需要手改配置回来。
+- ⚠️ 别用 `hyprctl eval` 单独喂那块：本机 Hyprland 0.56.2 有 Lua 重载崩溃史（插件 `docs/HYPRLAND-0.56.2-LUA-RELOAD-CRASH.md`），插件的 `bin/load-bindings` 才带安全校验。
+- **行为与快捷键、完整排查记录见 `omarchy-function-tweaks.md` §3.6**（本文档只记插件层）。
+
+```bash
+bash ~/.config/omarchy/plugins/io.github.mtolhuys.fathom/bin/load-bindings --check   # Alt+Tab 归属
+omarchy-shell fathom state        # opened/mode/windows/snapshots/usingLua
+omarchy-shell fathom cancel       # overlay 卡在打开态时关掉（不改焦点）
+```
 
 ## 六、`shell.json` 其它关键段（当前）
 
@@ -131,6 +151,8 @@ bar:               { position: top, transparent: false, id: charlieras262.floati
 - `jesseburlamaque.omarchy-find`：文件搜索（本机归档笔记（未随本仓库发布））。
 - `io.github.surfacedp.xmb-menu` + `jianlongliu.xmb-menu`：XMB 波浪菜单双份移除（本机归档笔记（未随本仓库发布））。
 - 无留档（试过即弃）：`firstpick.keybindings`、`ssandys.colophon`、`io.github.jccl1706.localsend`、`halmylyseas.github-status`。
+- `coding-sparrow.systempulse`（System Pulse，CPU/状态）、`andreconde.quick-look`（Quick Look，快速预览）：**已卸载**（2026-09-26 核对 `omarchy plugin list` 已无此二者；无留档）。
+- `io.github.lijiawei0305-pixel.mihomo`：代理面板插件，**已卸载**（2026-09-26 核对：目录/列表/shell.json 里均无；§8.1 那条防御补丁随之失效）。代理改走 mihomo 本体。
 
 ## 八、注意事项
 
@@ -149,7 +171,7 @@ bar:               { position: top, transparent: false, id: charlieras262.floati
 
 | 插件 | 文件 | 补丁作用 |
 |---|---|---|
-| `io.github.lijiawei0305-pixel.mihomo` | `ProxiesPage.qml` | 防御：引擎未连接时 `svc` 为 null，原代码仍调 `svc.t()` 崩溃；改为先判 `root.svc` 再取文本 |
+| ~~`io.github.lijiawei0305-pixel.mihomo`~~ | `ProxiesPage.qml` | ~~防御：引擎未连接时 `svc` 为 null，原代码仍调 `svc.t()` 崩溃；改为先判 `root.svc` 再取文本~~ **已随插件卸载失效**（2026-09-26 核对：插件目录与列表里均已无）。代理仍走 mihomo 本体（TUN / CLI），不再经此插件 |
 | `charlieras262.floating-bar` | `Bar.qml` | 定制：Omablur 卸载（2026-09-16）后 `Style.shellOpacity` 彻底废弃，而上游写法是"背景强制 alpha=1 × shellOpacity（缺失回落 1）"→ **bar 会变实心**；改为 `color: root.background`（直接吃主题 `[bar] background-alpha` 0.5）+ `opacity: 1`。**该改动已取代上游的 `typeof` 防御**（代码里已无 `shellOpacity` 引用） |
 | `charlieras262.floating-bar` | `Bar.qml` | 定制：`barBackground` 改 `BorderSurface` + 一圈与聚焦窗口同源的 `hyprlandActiveSpec` 渐变（五彩琉璃环），宽度运行时 probe `general:border_size`；环可开关（`shell.json` → `bar.borderRing`，命令 `omarchy-bar-ring`）。细节见 `omarchy-visual-tweaks.md` §7.2/§7.4 |
 | `charlieras262.floating-bar` | `Bar.qml` `injectProps()` | 防御：早期实例化时 `root` 未就绪，`target.bar = root` 抛 "Cannot assign undefined to QObject*"；加 `&& root` 守卫 |
@@ -296,6 +318,9 @@ grim -g "$((x-10)),$((y-10)) $((w+20))x$((h+20))" /tmp/dock.png
 ### 8.6 开机解密屏（lock-explorer boot screen）
 
 **现状**：开机解密屏 = lock-explorer 的 **snapshot 孪生**（把锁屏整屏截一张图当背景，密码圆点用主题画在**设计自己的输入框**里）。`shell.json` 该插件 `boot=follow`，实际应用 `snapshot:my-splitjianlong`；状态文件 `~/.local/state/omarchy/lock-explorer-boot`；截图 `~/.local/state/omarchy/lock-explorer-snapshots/{my-splitjianlong,my-splitjianlong-plain}.png`。
+
+**屏上的钟是活的（2026-09-27 起）**：快照里的钟是抓取那一刻的死像素，现在由 `bootclock`（mkinitcpio hook，`HOOKS` 里插在 `plymouth` 之前）把本次启动的本地时间写进主题键文件的 `[script-env-vars]`，主题脚本再用 `Image.Text` 画回原位——Plymouth 本身**没有**时间 API，只有这条注入路。位置/字号量自快照：文字左 3.04%、时分 81.76%/133pt、日期 92.61%/32pt；字体按设计的 DemiBold 用 2px 对角线画 4 次合成加粗（本机该族只有 Regular）。抓快照时设计副本会隐藏底部那列钟（`visible: !lock.snapshotMode`），底图里因此没有钟。
+装机文件、四个坑（initramfs busybox 无 `date`、空值渲染成 `#NULL` 要靠 `Plymouth.GetMode()` 门控、几何文件别放 `lock-designs/`、重启清 `/tmp`）、重抓触发法与回退：`agent-scratch/bootclock-live-clock.md`。
 
 **为什么不是手写孪生**：插件手写 plymouth 孪生只有 `terminal / storm / eyes / river`（`Designs.js` 里 `boot: true` 的四个），split 走 snapshot 路线——`plymouth/apply.sh` 的 `snapshot:` 分支拿 explorer 量出的输入框几何生成主题。
 
