@@ -8,15 +8,12 @@
 
 ## 效果
 
-| 交互 | 本仓库 | Omarchy 出厂 |
-| --- | --- | --- |
-| `SUPER + TAB` | **滚动总览**：工作区卡片网格 + 背景模糊，滚轮带动画切换 | 此键原是「下一个工作区」，出厂**无总览功能** |
-| `SUPER + 滚轮`（平铺下） | 工作区**纵向滑动**切换；滚到空工作区就停住 | 硬切（`workspaces` 动画出厂关闭） |
-| `SUPER + CTRL + ↑/↓` | 把当前窗口移到上/下工作区，**碰到空工作区停住** | 无边界，会一直往下跑 |
-| `SUPER + PAGE_UP/DOWN` | 上/下一个工作区 | 同 |
-
-> **滚动总览的效果本体不是本仓库写的**：来自第三方 Hyprland 原生插件 [`yayuuu/hyprland-scroll-overview`](https://github.com/yayuuu/hyprland-scroll-overview)（niri 的 scroll-overview 移植，用 `hyprpm` 装，**不是** Omarchy shell 插件）。本仓库做的是**接入**：`SUPER + TAB` 的绑定（必须走 Lua API `hl.plugin.scrolloverview.overview("toggle all")`，用 dispatcher 字符串会**静默空操作**）、`plugins.lua` 的配置、以及**重启后自动加载**的修复（`hyprpm reload` 挂在 autostart 上）。
-> 其余三条（纵向滑动、有界工作区、有界移窗）是本仓库自己的函数 + 绑定。
+| 交互 | 装好后 | Omarchy 出厂 | 由谁提供 |
+| --- | --- | --- | --- |
+| `SUPER + TAB` | **滚动总览**：工作区卡片网格 + 背景模糊，滚轮带动画切换 | 此键原是「下一个工作区」，出厂**无总览功能** | 插件 [`yayuuu/hyprland-scroll-overview`](https://github.com/yayuuu/hyprland-scroll-overview)（`hyprpm` 装，niri 的 scroll-overview 移植）+ 本仓库的绑定与配置 |
+| `SUPER + 滚轮`（平铺下） | 工作区**纵向滑动**切换；滚到空工作区就停住 | 硬切（`workspaces` 动画出厂关闭） | 本仓库（`bindings.lua` 的有界工作区函数） |
+| `SUPER + CTRL + ↑/↓` | 把当前窗口移到上/下工作区，**碰到空工作区停住** | 无边界，会一直往下跑 | 本仓库（`bindings.lua` 的有界移窗函数） |
+| `SUPER + PAGE_UP/DOWN` | 上/下一个工作区 | 同 | 本仓库（绑定） |
 
 ## 截图
 
@@ -32,7 +29,7 @@
 除了 niri 化本身，这里还沉淀了一批 Omarchy 定制——都能单独拿去用：
 
 - **`hypr/`**
-  - **滚动总览接入**：`SUPER + TAB` 绑定 + `plugins.lua` 配置 + 重启自加载修复（插件本体是上面那个第三方项目，本仓库不含其源码）。
+  - **滚动总览**：效果本体由第三方 Hyprland 原生插件 [`yayuuu/hyprland-scroll-overview`](https://github.com/yayuuu/hyprland-scroll-overview) 提供（`hyprpm` 装，niri 的 scroll-overview 移植）。本仓库负责把它接进来：`SUPER + TAB` 绑定（必须走 Lua API `hl.plugin.scrolloverview.overview("toggle all")`，用 dispatcher 字符串会**静默空操作**）、`plugins.lua` 配置、以及重启后自动加载的修复。
   - **纵向动画**：打开出厂的 `workspaces` 动画，切工作区不再硬切。
   - **有界工作区/移窗**：滚到底停住，不会无限新建工作区；多屏下不跨屏乱跳。
 - **`omarchy/`**
