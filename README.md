@@ -22,6 +22,7 @@
 | :---: | :---: |
 | **滚动总览** `SUPER + TAB`<br>[![滚动总览](screenshots/scroll-overview.webp)](screenshots/scroll-overview.webp) | **纵向平铺 + 悬浮栏**<br>[![纵向平铺](screenshots/tiling.webp)](screenshots/tiling.webp) |
 | **底栏与 Arc Dock**（图标随主题着色）<br>[![底栏与 Arc Dock](screenshots/bar-dock.webp)](screenshots/bar-dock.webp) | **锁屏**：Split 设计 + 自定义显示名<br>[![锁屏](screenshots/lock-screen.webp)](screenshots/lock-screen.webp) |
+| **Alt+Tab**：Fathom 深度切换器（按「多久没用过」排 z 轴，标题行里的 *fathoms* 就是深度单位）<br>[![Alt+Tab](screenshots/alt-tab.webp)](screenshots/alt-tab.webp) |  |
 
 > 点图看原图。配色由壁纸动态生成（matugen M3），换壁纸整体观感会变。
 
