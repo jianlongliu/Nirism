@@ -14,6 +14,7 @@
 | `SUPER + 滚轮`（平铺下） | 工作区**纵向滑动**切换；滚到空工作区就停住 | 硬切（`workspaces` 动画出厂关闭） | 本仓库（`bindings.lua` 的有界工作区函数） |
 | `SUPER + CTRL + ↑/↓` | 把当前窗口移到上/下工作区，**碰到空工作区停住** | 无边界，会一直往下跑 | 本仓库（`bindings.lua` 的有界移窗函数） |
 | `SUPER + PAGE_UP/DOWN` | 上/下一个工作区 | 同 | 本仓库（绑定） |
+| `ALT + TAB` | **Fathom 深度式窗口切换器**：窗口按「多久没用过」排 z 轴，最近用的在最前、越久越退远（观感类似 Vista 的 Aero Flip 3D），按住 Alt 用 Tab / 滚轮 / 方向键下潜、松开聚焦，堆栈下方还有工作区小地图 | 出厂的循环切换（`cycle_next` / `bring_to_top`） | 插件 [`mtolhuys/fathom`](https://github.com/mtolhuys/fathom)（`omarchy plugin add` 装）+ 本仓库 `hypr/bindings.lua` 的挂载块 |
 
 ## 截图
 
@@ -32,6 +33,7 @@
   - **滚动总览**：效果本体由第三方 Hyprland 原生插件 [`yayuuu/hyprland-scroll-overview`](https://github.com/yayuuu/hyprland-scroll-overview) 提供（`hyprpm` 装，niri 的 scroll-overview 移植）。本仓库负责把它接进来：`SUPER + TAB` 绑定（必须走 Lua API `hl.plugin.scrolloverview.overview("toggle all")`，用 dispatcher 字符串会**静默空操作**）、`plugins.lua` 配置、以及重启后自动加载的修复。
   - **纵向动画**：打开出厂的 `workspaces` 动画，切工作区不再硬切。
   - **有界工作区/移窗**：滚到底停住，不会无限新建工作区；多屏下不跨屏乱跳。
+  - **Alt+Tab = Fathom**：效果本体由第三方 Omarchy 插件 [`mtolhuys/fathom`](https://github.com/mtolhuys/fathom) 提供（按「多久没用过」排 z 轴的深度式切换器 + 工作区小地图）。本仓库负责挂载：`bindings.lua` 末尾的块 `dofile` 插件的 `hypr/fathom.lua`，把出厂的 `ALT + TAB` / `ALT + SHIFT + TAB` 重绑过去，按住 Alt 期间进 `fathom` submap（`ALT+F4`、`ALT+SPACE` 等不受影响）；插件没装或被禁时整段空转，自动回落出厂行为。
 - **`omarchy/`**
   - **自改插件**：`jianlongliu.*` 共 9 个，**6 个在跑**（5 个克隆自内建 + 1 个自建 `arch-logo`）。含工作区指示器 **GNOME 胶囊**、卡片式 OSD、Arch logo 菜单、键盘布局、更新提示等。
   - **LUKS 开机解密屏**：① 等待动画改成沿面板边界的竖线（上游圆弧在 4K 上只有一个小点）；② **屏上的时间/日期是活的**——`bootclock` mkinitcpio hook 在 plymouthd 之前把本次启动时间写进主题键文件的 `[script-env-vars]`，主题脚本用 `Image.Text` 画回原位（Plymouth **没有**时间 API，只有注入这条路人）。两者见 [`omarchy/patches/`](omarchy/patches/) 与 `docs/omarchy-plugins.md` §8.6。
@@ -44,6 +46,7 @@
 
 - 目标机需是 **Omarchy**（配置依赖 `o.*` / `hl.*` 助手）。
 - 滚动总览需要**联网装一次**第三方插件：`hyprpm add https://github.com/yayuuu/hyprland-scroll-overview.git`（插件编译失败时按文档用 git rev 锁定适配版本）。其余功能只用 Omarchy/Hyprland 自带能力。
+- Alt+Tab 的 Fathom 也是第三方插件，装一次即可：`omarchy plugin add https://github.com/mtolhuys/fathom --enable`（没装时 Alt+Tab 自动回落出厂行为，不会报错）。
 
 ## 安装
 
