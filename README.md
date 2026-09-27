@@ -15,6 +15,9 @@
 | `SUPER + CTRL + ↑/↓` | 把当前窗口移到上/下工作区，**碰到空工作区停住** | 无边界，会一直往下跑 |
 | `SUPER + PAGE_UP/DOWN` | 上/下一个工作区 | 同 |
 
+> **滚动总览的效果本体不是本仓库写的**：来自第三方 Hyprland 原生插件 [`yayuuu/hyprland-scroll-overview`](https://github.com/yayuuu/hyprland-scroll-overview)（niri 的 scroll-overview 移植，用 `hyprpm` 装，**不是** Omarchy shell 插件）。本仓库做的是**接入**：`SUPER + TAB` 的绑定（必须走 Lua API `hl.plugin.scrolloverview.overview("toggle all")`，用 dispatcher 字符串会**静默空操作**）、`plugins.lua` 的配置、以及**重启后自动加载**的修复（`hyprpm reload` 挂在 autostart 上）。
+> 其余三条（纵向滑动、有界工作区、有界移窗）是本仓库自己的函数 + 绑定。
+
 ## 截图
 
 |  |  |
@@ -29,20 +32,23 @@
 除了 niri 化本身，这里还沉淀了一批 Omarchy 定制——都能单独拿去用：
 
 - **`hypr/`**
-  - **滚动总览**：ScrollOverview 插件接入（`SUPER + TAB`），含「重启后自动加载」的修复。
+  - **滚动总览接入**：`SUPER + TAB` 绑定 + `plugins.lua` 配置 + 重启自加载修复（插件本体是上面那个第三方项目，本仓库不含其源码）。
   - **纵向动画**：打开出厂的 `workspaces` 动画，切工作区不再硬切。
   - **有界工作区/移窗**：滚到底停住，不会无限新建工作区；多屏下不跨屏乱跳。
 - **`omarchy/`**
-  - **自改插件**：`jianlongliu.*` 共 9 个，**6 个在跑**（5 个克隆自内建 + 1 个自建）。含工作区指示器 **GNOME 胶囊**、卡片式 OSD、Arch logo 菜单、键盘布局、更新提示等。
-  - **LUKS 开机解密屏**：等待动画改成沿面板边界的竖线（上游圆弧在 4K 上只有一个小点），见 [`omarchy/patches/`](omarchy/patches/)。
+  - **自改插件**：`jianlongliu.*` 共 9 个，**6 个在跑**（5 个克隆自内建 + 1 个自建 `arch-logo`）。含工作区指示器 **GNOME 胶囊**、卡片式 OSD、Arch logo 菜单、键盘布局、更新提示等。
+  - **LUKS 开机解密屏**：① 等待动画改成沿面板边界的竖线（上游圆弧在 4K 上只有一个小点）；② **屏上的时间/日期是活的**——`bootclock` mkinitcpio hook 在 plymouthd 之前把本次启动时间写进主题键文件的 `[script-env-vars]`，主题脚本用 `Image.Text` 画回原位（Plymouth **没有**时间 API，只有注入这条路人）。两者见 [`omarchy/patches/`](omarchy/patches/) 与 `docs/omarchy-plugins.md` §8.6。
   - **锁屏**：Split 设计副本，显示名可自定义（上游只认登录名）。
   - **磨砂玻璃 / 浮栏 / 边框**：layer_rule + 主题 alpha + matugen 动态色，多层视觉同源。
   - **登录界面壁纸跟随桌面**（SDDM）。
 - **`docs/`**：上面每一项的完整做法、验证命令与回退路径。
 
-## 安装
+## 依赖
 
-目标机需是 **Omarchy**（配置依赖 `o.*` / `hl.*` 助手），否则不适用。
+- 目标机需是 **Omarchy**（配置依赖 `o.*` / `hl.*` 助手）。
+- 滚动总览需要**联网装一次**第三方插件：`hyprpm add https://github.com/yayuuu/hyprland-scroll-overview.git`（插件编译失败时按文档用 git rev 锁定适配版本）。其余功能只用 Omarchy/Hyprland 自带能力。
+
+## 安装
 
 按 [`docs/omarchy-nirification.md`](docs/omarchy-nirification.md) 文首的「执行顺序总览」逐条执行，每步都带**验证 + 回退**。
 
@@ -61,12 +67,14 @@
 5. 目标机必须是 Omarchy（依赖 o.*/hl.* 助手），否则不适用。
 ```
 
+> 桌面机没有触控板：文档第八节的触控板手势用不上，跳过即可（文档里已标注为可选）。
+
 ## 仓库结构
 
 | 目录 | 对应本机位置 | 内容 |
 | --- | --- | --- |
-| [`hypr/`](hypr/) | `~/.config/hypr` | Hyprland 配置：ScrollOverview 接入、纵向动画、niri 化快捷键、有界工作区/移窗函数 |
-| [`omarchy/`](omarchy/) | `~/.config/omarchy` | shell 配置 + 自改 `jianlongliu.*` 插件 + 锁屏设计 + 第三方插件补丁 |
+| [`hypr/`](hypr/) | `~/.config/hypr` | Hyprland 配置：滚动总览接入（绑定 + 自加载）、纵向动画、niri 化快捷键、有界工作区/移窗函数 |
+| [`omarchy/`](omarchy/) | `~/.config/omarchy` | shell 配置 + 自改 `jianlongliu.*` 插件 + 锁屏设计 + 第三方插件补丁文档 |
 | [`docs/`](docs/) | — | 三篇参考文档（见下） |
 | [`screenshots/`](screenshots/) | — | README 截图（webp，1920×1080） |
 
@@ -78,13 +86,13 @@
 | --- | --- |
 | [`omarchy-nirification.md`](docs/omarchy-nirification.md) | **niri 化安装教程**：分步、每步带验证与回退 —— **从这里开始** |
 | [`omarchy-visual-tweaks.md`](docs/omarchy-visual-tweaks.md) | bar 视觉定制：字号/图标对齐、磨砂玻璃与 layer rule、工作区胶囊、字体链、锁屏、SDDM 壁纸同步、matugen 动态配色 |
-| [`omarchy-plugins.md`](docs/omarchy-plugins.md) | 插件清单与管理命令（按真实 `shell.json` 同步）+ 本地补丁记录 + 上游跟踪（clone 对 omarchy、第三方插件对作者） |
+| [`omarchy-plugins.md`](docs/omarchy-plugins.md) | 插件清单与管理命令（按真实 `shell.json` 同步）+ 本地补丁记录（含开机解密屏的等待竖线与活时钟）+ 上游跟踪（clone 对 omarchy、第三方插件对作者） |
 
 ## 说明
 
 - **⚠️ 这是 vibe coding 的产物，建议交给 AI agent 安装。**
   这套配置由单人 + AI agent 长期迭代而成，**已知粗糙**：无测试、无 CI，多数结论只在本机（Omarchy 4.0.4 / Hyprland 0.56.2）当场验过一次，版本一变就可能失效；历史上有过改错文件、写坏补丁、脱敏搞出乱码这类事故。文档写得细（每步带验证与回退）正是为了弥补这一点——**按文档走 + 每步验证**比凭经验手改可靠得多。出问题别硬猜，把对应文档章节和报错一起交给 agent 排查。
 - 配置与文档由 AI agent 生成/整理，含 AI 协助调参、排障。
-- 各插件版权归原作者；自改 `jianlongliu.*` 克隆插件基于 Omarchy 内建插件；补丁均注明上游与基准版本。
+- 各插件版权归原作者：滚动总览属 [`yayuuu/hyprland-scroll-overview`](https://github.com/yayuuu/hyprland-scroll-overview)；自改 `jianlongliu.*` 克隆插件基于 Omarchy 内建插件；补丁均注明上游与基准版本。
 - 改动历史见 [`hypr/CHANGELOG.md`](hypr/CHANGELOG.md) 与 [`omarchy/CHANGELOG.md`](omarchy/CHANGELOG.md)。
 - [`omarchy/lock-avatar.png`](omarchy/lock-avatar.png)：锁屏头像样例（lock-explorer 探测的首选路径）。拷到 `~/.config/omarchy/lock-avatar.png` 即被读取；不想要就删，锁屏回落显示首字母。
