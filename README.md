@@ -1,12 +1,13 @@
 # Nirism
 
-在 **Hyprland** 上把 [Omarchy](https://github.com/basecamp/omarchy) 的工作区操作改成 **[niri](https://github.com/YaLTeR/niri) 风格**：滚动总览 + 纵向平滑切换。
+**用 Omarchy + Hyprland，做出 niri 的手感。** 不换合成器，只把工作区与窗口的交互/观感改成 niri 那套：**滚动总览**（`SUPER+TAB`）+ **工作区纵向平滑切换**。
 
-> ⚠️ 与笔记本那台 [onarchi](https://github.com/jianlongliu/onarchi)（**真正的 niri 移植**，原 `omarchy-on-niri`）不同：本仓库跑在 **Hyprland** 上，只是把**操作习惯**做成 niri 的样子，不是 niri 移植。
->
-> 本仓原名 `omarchy-like-niri`（2026-09-28 改名，旧链接会 301 跳过来）。
->
-> 实测环境：**Omarchy 4.0.4 / Hyprland 0.56.2**（详见各文档头部「最后核对」）。
+- **它是什么**：一份 Omarchy（Arch + Hyprland）的**配置与定制合集**——键位、动画、磨砂、插件、锁屏等，装完就是本机的桌面。
+- **它不是什么**：**不是 niri 移植**。合成器依然是 Hyprland，Omarchy 依然是 Omarchy；「niri 风格」只指操作习惯（滚动式工作区、总览），不是窗口管理器本身。
+- **兄弟仓**：[`onarchi`](https://github.com/jianlongliu/onarchi)（笔记本那台）才是**真正的 niri 移植**——把 Omarchy 搬到 niri compositor 上。两仓互补，不是同一份代码，别混。
+- **本仓原名** `omarchy-like-niri`（2026-09-28 改名，旧链接 301 跳转）。
+- **实测环境**：**Omarchy 4.0.4 / Hyprland 0.56.2**（详见各文档头部「最后核对」）。
+- **仓库结构**：`hypr/` ← `~/.config/hypr`、`omarchy/` ← `~/.config/omarchy`、`docs/` 教程与踩坑、`screenshots/` 效果图。
 
 ## 效果
 
