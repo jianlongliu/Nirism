@@ -20,6 +20,21 @@ hl.config({
   },
 })
 
+-- Let SUPER+LEFT/RIGHT (directional focus) move off a fullscreen window.
+-- In the scrolling layout the workspace's fullscreen is "layout managed", and
+-- Hyprland then blocks directional focus unless BOTH this option and
+-- misc:on_focus_under_fullscreen != 0 are set (WindowQuery.cpp, find()):
+-- with movefocus_cycles_fullscreen = false every candidate window is skipped,
+-- so the keys look dead while SUPER+F (maximized with bar) is active.
+-- Note: in a layout-managed FS this option does NOT do its usual "cycle"
+-- dance — it only re-enables directional focus, so true fullscreen
+-- (SUPER+CTRL+F) becomes arrow-navigable too.
+hl.config({
+  binds = {
+    movefocus_cycles_fullscreen = true,
+  },
+})
+
 -- https://wiki.hypr.land/Configuring/Basics/Variables/#decoration
 hl.config({
   decoration = {

@@ -2,6 +2,13 @@
 
 改动日志（倒序，最新在上）。提交代码时同步更新本节。
 
+## 2026-09-28（scrolling 布局下方向键在带状态栏全屏上"失灵"）
+- **`looknfeel.lua`**：基础块后追加 `hl.config({ binds = { movefocus_cycles_fullscreen = true } })`。**为什么**：工作区跑 scrolling 布局（`hyprctl activeworkspace -j` → `tiledLayout: "scrolling"`，`clients -j` → `fullscreenHandler: "scrolling"`），于是 `SUPER+F` 的最大化属于**布局托管全屏**。Hyprland 找方向聚焦候选窗口时（`src/desktop/state/WindowQuery.cpp` 的 `find()`），对布局托管 FS 要求 `binds:movefocus_cycles_fullscreen = true` **且** `misc:on_focus_under_fullscreen != 0` 才继续遍历；后者 omarchy 出厂已设 1，前者是 Hyprland 默认 false → 候选窗口全被 `continue` 跳过 → `SUPER+LEFT/RIGHT` 看起来是死键。语义见上游用例 `hyprtester/src/tests/main/scroll.cpp:1070`（scrolling 下该选项**不做 cycle**，只是放开方向聚焦）。
+- **副作用**：`SUPER+CTRL+F` 的真全屏同样变得可被方向键移走焦点。**工作区**切换（`SUPER+TAB`/`PAGE_UP`/`PAGE_DOWN`/`SUPER+滚轮`）走 `focus({ workspace })` 另一条路径，从未受影响。
+- **验证**：`hyprctl reload` + `hyprctl configerrors` 空、`getoption binds:movefocus_cycles_fullscreen` → `set: true`。A/B（把值临时改 false 再 reload）：焦点在最大化窗口时 `hyprctl dispatch hl.dsp.focus({direction='r'})` → 仍停原窗；改回 true → 焦点移到右侧 ghostty。备份 `looknfeel.lua.bak.1790614121`。
+- 备注：运行时无法用 `hyprctl keyword`（0.56 新解析器：`keyword can't work with non-legacy parsers. Use eval.`）。
+- 相关：（本地笔记存档） §3.1。
+
 ## 2026-09-26（Alt+Tab 交给 Fathom）
 - **`bindings.lua`**：末尾追加 `fathom: begin … fathom: end` 块，`pcall(dofile, …)` 读插件 `io.github.mtolhuys.fathom` 的 `hypr/fathom.lua`（插件本体已 enable）。**为什么**：Fathom 是深度式 Alt+Tab（按"多久没用过"把窗口排在 z 轴上 + 附工作区小地图），上游只提供这块 snippet，得自己接进用户配置；换掉出厂 `cycle_next` + `bring_to_top`（`tiling.lua:44-47` 在 `ALT+TAB`/`ALT+SHIFT+TAB` 各挂两条）。
 - **不用手写 `hl.unbind`**：插件脚本自己 unbind 那两个组合再重绑 fathom 的 next/previous；本机原有 `ALT+F4`（关窗）、`ALT+SPACE`（Spotlight）不含 Tab，未被碰。按住 Alt 期间进 `fathom` submap、松开 `reset`，这些 Alt 快捷键只在按住时让位。
