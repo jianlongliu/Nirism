@@ -1,8 +1,10 @@
-# omarchy-like-niri
+# Nirism
 
 在 **Hyprland** 上把 [Omarchy](https://github.com/basecamp/omarchy) 的工作区操作改成 **[niri](https://github.com/YaLTeR/niri) 风格**：滚动总览 + 纵向平滑切换。
 
-> ⚠️ 与笔记本那台 [Nirism](https://github.com/jianlongliu/Nirism)（**真正的 niri 移植**）不同：本仓库跑在 **Hyprland** 上，只是把**操作习惯**做成 niri 的样子，不是 niri 移植。
+> ⚠️ 与笔记本那台 [omarchy-on-niri](https://github.com/jianlongliu/omarchy-on-niri)（**真正的 niri 移植**）不同：本仓库跑在 **Hyprland** 上，只是把**操作习惯**做成 niri 的样子，不是 niri 移植。
+>
+> 本仓原名 `omarchy-like-niri`（2026-09-28 改名，旧链接会 301 跳过来）。
 >
 > 实测环境：**Omarchy 4.0.4 / Hyprland 0.56.2**（详见各文档头部「最后核对」）。
 
