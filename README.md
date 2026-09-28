@@ -2,9 +2,9 @@
 
 **用 Omarchy + Hyprland，做出 niri 的手感。** 不换合成器，只把工作区与窗口的交互/观感改成 niri 那套：**滚动总览**（`SUPER+TAB`）+ **工作区纵向平滑切换**。
 
-- **它是什么**：一份 Omarchy（Arch + Hyprland）的**配置与定制合集**——键位、动画、磨砂、插件、锁屏等，装完就是本机的桌面。
+- **它是什么**：一份 Omarchy（Arch + Hyprland）的**配置与定制合集**——键位、动画、磨砂、插件、锁屏等，装完即是这套桌面。
 - **它不是什么**：**不是 niri 移植**。合成器依然是 Hyprland，Omarchy 依然是 Omarchy；「niri 风格」只指操作习惯（滚动式工作区、总览），不是窗口管理器本身。
-- **兄弟仓**：[`onarchi`](https://github.com/jianlongliu/onarchi)（笔记本那台）才是**真正的 niri 移植**——把 Omarchy 搬到 niri compositor 上。两仓互补，不是同一份代码，别混。
+- **兄弟仓**：[`onarchi`](https://github.com/jianlongliu/onarchi) 是把 Omarchy **真正移植到 niri** 的仓（另含针对 **ThinkPad X1 Carbon Gen 9** 的定制与优化）。两仓互补，不是同一份代码，别混。
 - **本仓原名** `omarchy-like-niri`（2026-09-28 改名，旧链接 301 跳转）。
 - **实测环境**：**Omarchy 4.0.4 / Hyprland 0.56.2**（详见各文档头部「最后核对」）。
 - **仓库结构**：`hypr/` ← `~/.config/hypr`、`omarchy/` ← `~/.config/omarchy`、`docs/` 教程与踩坑、`screenshots/` 效果图。
