@@ -49,6 +49,31 @@ git checkout plymouth/custom/generate.sh
 
 已提 [SirJul1337/omarchy-lock-explorer#40](https://github.com/SirJul1337/omarchy-lock-explorer/issues/40)。上游若合并，可撤下本补丁。
 
+## `lock-explorer-qt612-color.patch`
+
+**插件**：`io.github.sirjul1337.lock-explorer`
+**基准版本**：v1.8.1 + 本机 local 提交（`wait_line`、`bootclock`）；**先打本补丁，再打 `lock-explorer-user-designs.patch`**
+**作用**：Qt 6.12 的 `QtQuick/Color` 单例与插件里的裸 `Color.*` 冲突（裸名取到 `undefined`）。把 69 个 QML/JS 文件的裸引用改为 `Commons.Color.*`，并补 `import qs.Commons as Commons`；`Designer.js` 默认片段与 `DesignerItem.qml` 的生成包装也一并改，否则新建/编辑设计会再生成裸引用。
+
+### 重打
+
+```bash
+cd ~/.config/omarchy/plugins/io.github.sirjul1337.lock-explorer
+git apply --check -p1 <repo>/omarchy/patches/lock-explorer-qt612-color.patch
+git apply -p1 <repo>/omarchy/patches/lock-explorer-qt612-color.patch
+omarchy restart shell
+```
+
+**验证**：`omarchy restart shell` 后新 PID 无 `Color is not defined` / `TypeError: Cannot read property '*.foreground' of null`；`grep -RInP '(?<!Commons\.)\bColor\.'` 在插件目录应为 0 命中（排除 `.bak`）。插件升级后需按同一变换 rebase 本补丁。
+
+### 回退
+
+```bash
+cd ~/.config/omarchy/plugins/io.github.sirjul1337.lock-explorer
+git apply --reverse -p1 <repo>/omarchy/patches/lock-explorer-qt612-color.patch
+omarchy restart shell
+```
+
 ## `lock-explorer-user-designs.patch`
 
 **插件**：`io.github.sirjul1337.lock-explorer`

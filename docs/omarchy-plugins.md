@@ -174,7 +174,7 @@ bar:               { position: top, transparent: false, id: charlieras262.floati
 
 下表都是**改第三方插件源码**的本地补丁，不在上游；分**防御补丁**（上游 bug 的本地兜底）与**定制补丁**（有意改外观/行为）。**`omarchy update` 不会碰它们**（它只换 `/usr/share/omarchy`，不碰 `~/.config/`，见 §9.4）；会被冲掉的是 `omarchy plugin update` 或对该插件仓 `git pull` / `reset`，届时按需重打（防御补丁的原诊断见本机归档笔记（未随本仓库发布））：
 
-> **补丁存档**：公开仓 `omarchy/patches/` 存可重打的 diff（当前两个：`lock-explorer-generate.sh.patch`、`lock-explorer-user-designs.patch`，含重打/回退步骤）。插件目录被 `.gitignore` 排除且各自带独立 git 仓，故不放插件文件本体。
+> **补丁存档**：公开仓 `omarchy/patches/` 存可重打的 diff（当前三个：`lock-explorer-generate.sh.patch`、`lock-explorer-qt612-color.patch`、`lock-explorer-user-designs.patch`，含重打/回退步骤）。插件目录被 `.gitignore` 排除且各自带独立 git 仓，故不放插件文件本体。
 >
 > **floating-bar 例外：本机改动已收进插件仓库自己的提交**（`local:` 前缀，2026-09-25 合并为**单个**提交），不再靠散落的 `Bar.qml.bak.*` 重放。升级走 §9.3 的 rebase 流程即可（改的是跟踪分支，不是补丁文件）。
 
@@ -188,6 +188,7 @@ bar:               { position: top, transparent: false, id: charlieras262.floati
 | `meviusisback.ai-subs` | `assets/icons/commandcode.svg` | 定制：Command Code 品牌图原是「黑圆角方块 + 白 ⌘」，换成**裸 ⌘**（只留白色 ⌘ path，viewBox 收紧到占图标位 20/24）→ 见 §8.4 的重打脚本 |
 | `io.github.claudsondouglas.arcdock` | `ArcSlot.qml`（图标 `Image`，约 388 行） | 定制：图标**取图尺寸 = 显示尺寸 × 悬停放大 × DPR**，`magnifyScale 200` 时 ≈166px 却只显示在 83px 上（**2 倍缩小**）→ 双线性缩小丢掉 SVG 抗锯齿，细线图标（Zen 的同心环最明显）出硬台阶。加 `mipmap: true` 让缩小走 mipmap 采样。**实测**环区中间灰(AA)像素 752 → **936（+24%）**。⚠️ 放大倍率 ≤150% 时只缩 1.25 倍、mipmap 不触发 → 等于没加（2026-09-16 首次尝试就是这么"无效"的） |
 | `io.github.sirjul1337.lock-explorer` | `plymouth/custom/generate.sh` | 定制：开机解密屏「等待动画」从圆弧改为**面板边界竖线**（新增 conf 键 `wait_line`/`wait_line_width` + `panel_edge_x()` 自动找边界，找不到自动回退**上游圆弧**）；**补丁基准 = v1.8.1**（2026-09-24 rebase，diff 存公开仓 `omarchy/patches/`）；细节、重贴与回退见 §8.6 |
+| `io.github.sirjul1337.lock-explorer` | 69 个 QML/JS 文件（含 `Designer.js` / `DesignerItem.qml`） | 防御：Qt 6.12 的 `QtQuick/Color` 单例与裸 `Color.*` 冲突（裸名 `undefined`）；补 `import qs.Commons as Commons` + `Commons.Color.*`。补丁 `omarchy/patches/lock-explorer-qt612-color.patch`；基线 = v1.8.1 + 本机 local 提交 |
 | `io.github.sirjul1337.lock-explorer` | `LockHost.qml` / `Service.qml` / `Explorer.qml` / `Editor.qml` | 防御：Quickshell 0.3.2 下 `.pragma library` 的 `Designs.USER` 不跨 QML 组件/engine 共享 → 用户设计在 LockHost 里全部回落 `card`（Split 锁屏/LUKS 快照一起丢）。给 LockHost 加 `userDesigns` 参数，Service/Explorer/Editor 各传自己 engine 的列表，Service 经 Bridge API 暴露给 Explorer。补丁 `omarchy/patches/lock-explorer-user-designs.patch`；基线 = v1.8.1 + Qt 6.12 `Commons.Color` 补丁 |
 
 ### 8.2 看 shell 启动日志的正确姿势

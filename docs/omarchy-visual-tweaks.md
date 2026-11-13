@@ -1301,7 +1301,7 @@ pacman -Qoq <该文件>;  ls /var/cache/pacman/pkg/ | grep -E '^<包名>-'
 `quickshell 0.3.2.r7.g2b4501a-1`、`layer-shell-qt 6.8.2-1`、`fcitx5-qt 5.1.16-2`、`omakade 1.17.0-1`。
 `pacman.conf` 备份在 `/etc/pacman.conf.bak-20261113`（回退时把 `IgnorePkg = ...` 行加回，再用 `/var/cache/pacman/pkg/` 里的 6.11.2 旧包 `pacman -U`）。
 
-**升级前置（第三方插件仍需要）**：omarchy 4.5.0-3 的 shell 已全量限定导入，但克隆/第三方插件不会自动改。本机在升级前给 `~/.config/omarchy/plugins` 下 **113 个 QML 文件、943 处裸 `Color.*`** 补了 `import qs.Commons as Commons` + `Commons.Color.*`；补丁前整目录备份在 `~/.cache/omarchy-plugins-pre-qt612-20261113.tar.gz`。锁屏本地设计 `~/.config/omarchy/lock-designs/{Card,SplitJianlong}.qml` 另补 **2 文件 / 21 处**（备份 `~/.cache/omarchy-lock-designs-pre-qt612-20261113.tar.gz`）；lock-explorer 的 `Designer.js` 默认 Custom QML 片段和 `DesignerItem.qml` 的 `createQmlObject` 包装也一并改成 `Commons.Color` + `import qs.Commons as Commons`，否则新建/编辑设计会再生成裸引用。以后新增或更新插件若仍写裸 `Color.`，按同一变换处理（只改引用，不动 `qs.Commons` 的单例名）。
+**升级前置（第三方插件仍需要）**：omarchy 4.5.0-3 的 shell 已全量限定导入，但克隆/第三方插件不会自动改。本机在升级前给 `~/.config/omarchy/plugins` 下 **113 个 QML 文件、943 处裸 `Color.*`** 补了 `import qs.Commons as Commons` + `Commons.Color.*`；补丁前整目录备份在 `~/.cache/omarchy-plugins-pre-qt612-20261113.tar.gz`。锁屏本地设计 `~/.config/omarchy/lock-designs/{Card,SplitJianlong}.qml` 另补 **2 文件 / 21 处**（备份 `~/.cache/omarchy-lock-designs-pre-qt612-20261113.tar.gz`）；lock-explorer 的 `Designer.js` 默认 Custom QML 片段和 `DesignerItem.qml` 的 `createQmlObject` 包装也一并改成 `Commons.Color` + `import qs.Commons as Commons`，否则新建/编辑设计会再生成裸引用。补丁存 `omarchy/patches/lock-explorer-qt612-color.patch`（69 文件 / 500 行）。以后新增或更新插件若仍写裸 `Color.`，按同一变换处理（只改引用，不动 `qs.Commons` 的单例名）。
 
 **升级后的验收**：
 1. `quickshell --version` 必须打印 `Quickshell 0.3.2 ...`；rc=127 或 `symbol lookup error` = Qt 栈仍混版本。

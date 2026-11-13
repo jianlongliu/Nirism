@@ -1,0 +1,3831 @@
+# lock-explorer: Qt 6.12 Commons.Color compatibility (no bare Color.*)
+# Base: v1.8.1 + local commits (wait_line, bootclock) in this plugin checkout
+# Apply from the plugin dir BEFORE lock-explorer-user-designs.patch: git apply -p1 <this file>
+
+diff --git c/Designer.js w/Designer.js
+index 736e634..9fcf5be 100644
+--- c/Designer.js
++++ w/Designer.js
+@@ -375,7 +375,7 @@ var KINDS = {
+     hint: "Write the QML yourself — lock.now, lock.userName and the rest are in scope",
+     sized: true,
+     w: 300, h: 120,
+-    spec: { qml: 'Text {\n  anchors.centerIn: parent\n  text: Qt.formatDate(lock.now, "dddd")\n  color: Color.lock.text\n  font.family: Style.font.family\n  font.pixelSize: 32\n}' },
++    spec: { qml: 'Text {\n  anchors.centerIn: parent\n  text: Qt.formatDate(lock.now, "dddd")\n  color: Commons.Color.lock.text\n  font.family: Style.font.family\n  font.pixelSize: 32\n}' },
+     fields: [
+       { key: "qml", type: "code", label: "QML" }
+     ]
+@@ -579,6 +579,7 @@ function generate(doc, pluginId) {
+   out.push("import QtQuick")
+   out.push("import QtQuick.Effects")
+   out.push("import qs.Commons")
++  out.push("import qs.Commons as Commons")
+   out.push('import "../plugins/' + pluginId + '/designs"')
+   out.push("")
+   out.push("DesignBase {")
+diff --git c/Designer.qml w/Designer.qml
+index c10a689..81f7777 100644
+--- c/Designer.qml
++++ w/Designer.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import Quickshell
+ import Quickshell.Io
+ import qs.Commons
++import qs.Commons as Commons
+ import "designs"
+ import "Designer.js" as D
+ 
+@@ -19,9 +20,9 @@ Item {
+   property var service: null
+   property var design: null
+   property string pluginId: "io.github.sirjul1337.lock-explorer"
+-  property color background: Color.menu.background
+-  property color foreground: Color.menu.text
+-  property color accent: Color.accent
++  property color background: Commons.Color.menu.background
++  property color foreground: Commons.Color.menu.text
++  property color accent: Commons.Color.accent
+   property string fontFamily: Style.font.menuFamily
+   property real screenWidth: 1920
+   property real screenHeight: 1080
+@@ -778,7 +779,7 @@ Item {
+     verticalAlignment: Text.AlignVCenter
+     text: designer.loadError
+     textFormat: Text.PlainText
+-    color: Color.lock.textError
++    color: Commons.Color.lock.textError
+     font.family: designer.fontFamily
+     font.pixelSize: Style.font.bodySmall
+     wrapMode: Text.Wrap
+@@ -878,7 +879,7 @@ Item {
+               anchors.topMargin: Style.space(5)
+               visible: componentArea.containsMouse || removeArea.containsMouse
+               text: "✕"
+-              color: removeArea.containsMouse ? Color.lock.textError : designer.muted
++              color: removeArea.containsMouse ? Commons.Color.lock.textError : designer.muted
+               font.family: designer.fontFamily
+               font.pixelSize: Style.font.caption
+               MouseArea {
+@@ -911,7 +912,7 @@ Item {
+                   anchors.centerIn: parent
+                   text: componentEntry.modelData.comp ? componentEntry.modelData.comp.name : ""
+                   textFormat: Text.PlainText
+-                  color: Color.background
++                  color: Commons.Color.background
+                   font.family: designer.fontFamily
+                   font.pixelSize: Style.font.caption
+                   font.weight: Font.DemiBold
+@@ -1039,7 +1040,7 @@ Item {
+                       anchors.centerIn: parent
+                       text: entry.modelData.kind.name
+                       textFormat: Text.PlainText
+-                      color: Color.background
++                      color: Commons.Color.background
+                       font.family: designer.fontFamily
+                       font.pixelSize: Style.font.caption
+                       font.weight: Font.DemiBold
+@@ -1310,7 +1311,7 @@ Item {
+                     width: Style.space(5)
+                     height: width
+                     radius: 1
+-                    color: parent.current ? Color.background : designer.muted
++                    color: parent.current ? Commons.Color.background : designer.muted
+                   }
+                   MouseArea {
+                     id: anchorArea
+diff --git c/DesignerButton.qml w/DesignerButton.qml
+index 87b9e93..d394a71 100644
+--- c/DesignerButton.qml
++++ w/DesignerButton.qml
+@@ -2,14 +2,15 @@ import QtQuick
+ import qs.Commons
+ 
+ // A small flat button for the designer's toolbar and panels.
++import qs.Commons as Commons
+ Rectangle {
+   id: button
+ 
+   property string label: ""
+   property bool primary: false
+   property bool active: true
+-  property color foreground: Color.menu.text
+-  property color accent: Color.accent
++  property color foreground: Commons.Color.menu.text
++  property color accent: Commons.Color.accent
+ 
+   signal clicked()
+ 
+@@ -28,7 +29,7 @@ Rectangle {
+     anchors.centerIn: parent
+     text: button.label
+     textFormat: Text.PlainText
+-    color: button.primary ? Color.background : button.foreground
++    color: button.primary ? Commons.Color.background : button.foreground
+     font.family: Style.font.menuFamily
+     font.pixelSize: Style.font.bodySmall
+     font.weight: button.primary ? Font.DemiBold : Font.Normal
+diff --git c/DesignerField.qml w/DesignerField.qml
+index d978662..a13c255 100644
+--- c/DesignerField.qml
++++ w/DesignerField.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Designer.js" as D
+ 
+ // One row in the designer's inspector. The kind's field list (Designer.js)
+@@ -14,8 +15,8 @@ Item {
+   property real minimum: 0
+   property real maximum: 1
+   property real step: 0.05
+-  property color foreground: Color.menu.text
+-  property color accent: Color.accent
++  property color foreground: Commons.Color.menu.text
++  property color accent: Commons.Color.accent
+   readonly property color muted: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.55)
+   readonly property color well: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.07)
+   readonly property color line: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.16)
+@@ -270,7 +271,7 @@ Item {
+             anchors.centerIn: parent
+             text: parent.modelData.name
+             textFormat: Text.PlainText
+-            color: parent.current ? Color.background : field.foreground
++            color: parent.current ? Commons.Color.background : field.foreground
+             font.family: Style.font.menuFamily
+             font.pixelSize: Style.font.caption
+           }
+@@ -374,7 +375,7 @@ Item {
+           width: parent.height - Style.space(6)
+           height: width
+           radius: width / 2
+-          color: field.value === true ? Color.background : field.foreground
++          color: field.value === true ? Commons.Color.background : field.foreground
+           Behavior on x { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+         }
+ 
+diff --git c/DesignerNode.qml w/DesignerNode.qml
+index 95eebdd..8d00bbe 100644
+--- c/DesignerNode.qml
++++ w/DesignerNode.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "designs"
+ import "Designer.js" as D
+ 
+@@ -57,7 +58,7 @@ Item {
+     visible: nodeRoot.editing && (nodeRoot.selected || hoverArea.containsMouse)
+     color: "transparent"
+     border.width: nodeRoot.selected ? 2 * nodeRoot.hair : nodeRoot.hair
+-    border.color: nodeRoot.selected ? Color.accent : Qt.rgba(1, 1, 1, 0.45)
++    border.color: nodeRoot.selected ? Commons.Color.accent : Qt.rgba(1, 1, 1, 0.45)
+   }
+ 
+   MouseArea {
+@@ -118,7 +119,7 @@ Item {
+       width: nodeRoot.grip
+       height: nodeRoot.grip
+       radius: nodeRoot.hair
+-      color: Color.accent
++      color: Commons.Color.accent
+       border.width: nodeRoot.hair
+       border.color: Qt.rgba(0, 0, 0, 0.6)
+       x: horizontal ? nodeRoot.width - width / 2 : (nodeRoot.width - width) / 2
+diff --git c/DesignerSwatch.qml w/DesignerSwatch.qml
+index 48312a1..206ad04 100644
+--- c/DesignerSwatch.qml
++++ w/DesignerSwatch.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // The theme color behind a role name, for the inspector's color swatches.
++import qs.Commons as Commons
+ // Same table as DesignerItem.roleColor, kept here so the panel can draw the
+ // choices without instantiating a design piece.
+ QtObject {
+@@ -9,14 +10,14 @@ QtObject {
+     var r = String(role || "text")
+     if (r.charAt(0) === "#") return r
+     switch (r) {
+-    case "accent": return Color.lock.borderActive
+-    case "error": return Color.lock.textError
+-    case "placeholder": return Color.lock.placeholder
+-    case "surface": return Color.lock.background
+-    case "background": return Color.background
++    case "accent": return Commons.Color.lock.borderActive
++    case "error": return Commons.Color.lock.textError
++    case "placeholder": return Commons.Color.lock.placeholder
++    case "surface": return Commons.Color.lock.background
++    case "background": return Commons.Color.background
+     case "black": return "#000000"
+     case "white": return "#ffffff"
+     }
+-    return Color.lock.text
++    return Commons.Color.lock.text
+   }
+ }
+diff --git c/designs/Analog.qml w/designs/Analog.qml
+index 5c35c79..817df08 100644
+--- c/designs/Analog.qml
++++ w/designs/Analog.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -32,9 +33,9 @@ DesignBase {
+         ctx.reset()
+         var c = width / 2
+         var r = c - 6
+-        var fg = Color.lock.text
+-        var accent = Color.lock.borderActive
+-        var bg = Color.lock.background
++        var fg = Commons.Color.lock.text
++        var accent = Commons.Color.lock.borderActive
++        var bg = Commons.Color.lock.background
+ 
+         ctx.beginPath()
+         ctx.arc(c, c, r, 0, Math.PI * 2)
+@@ -79,7 +80,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("dddd d MMMM  ·  HH:mm")
+-      color: lock.withAlpha(Color.lock.text, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 1
+diff --git c/designs/Aurora.qml w/designs/Aurora.qml
+index a882298..a22c5d2 100644
+--- c/designs/Aurora.qml
++++ w/designs/Aurora.qml
+@@ -2,15 +2,16 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+ 
+-  readonly property color c1: Color.lock.borderActive
++  readonly property color c1: Commons.Color.lock.borderActive
+   readonly property color c2: Qt.hsla((c1.hslHue + 0.12) % 1, Math.max(0.35, c1.hslSaturation), 0.5, 1)
+   readonly property color c3: Qt.hsla((c1.hslHue + 0.85) % 1, Math.max(0.35, c1.hslSaturation), 0.45, 1)
+ 
+-  Rectangle { anchors.fill: parent; color: Color.background }
++  Rectangle { anchors.fill: parent; color: Commons.Color.background }
+ 
+   Item {
+     id: blobs
+@@ -86,7 +87,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 9)
+         font.weight: Font.Light
+@@ -95,7 +96,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: Qt.formatDate(lock.now, "dddd, d MMMM")
+-        color: lock.withAlpha(Color.lock.text, 0.7)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.heading
+         font.letterSpacing: 2
+@@ -110,7 +111,7 @@ DesignBase {
+       height: 56
+       radius: 28
+       showLockGlyph: false
+-      color: lock.withAlpha(Color.lock.background, 0.4)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.4)
+       placeholder: lock.greeting() + ", " + lock.userName
+     }
+   }
+@@ -124,7 +125,7 @@ DesignBase {
+       ? lock.failedAttempts + " failed " + (lock.failedAttempts === 1 ? "attempt" : "attempts")
+       : (lock.fingerprintConfigured ? lock.fingerprintHint("Touch the sensor or press Enter") : "Press Enter to unlock")
+     textFormat: Text.PlainText
+-    color: lock.failedAttempts > 0 ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.45)
++    color: lock.failedAttempts > 0 ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.45)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.bodySmall
+     font.letterSpacing: 2
+diff --git c/designs/Avatar.qml w/designs/Avatar.qml
+index 9485e41..05cb4f8 100644
+--- c/designs/Avatar.qml
++++ w/designs/Avatar.qml
+@@ -3,6 +3,7 @@ import QtQuick.Effects
+ import qs.Commons
+ 
+ // The round user picture. Shows the avatar set with `omarchy-shell lock
++import qs.Commons as Commons
+ // pickAvatar` (A in the explorer) and falls back to the user's initial when
+ // there is none, or when the file cannot be read.
+ Item {
+@@ -13,8 +14,8 @@ Item {
+   property var lock: null
+   property string source: lock ? lock.avatarUrl : ""
+   property string initial: lock ? lock.userInitial : "?"
+-  property color fillColor: Color.lock.borderActive
+-  property color textColor: Color.background
++  property color fillColor: Commons.Color.lock.borderActive
++  property color textColor: Commons.Color.background
+   property real fontScale: 0.5
+   property int fontSize: Math.round(height * fontScale)
+   property int borderWidth: 0
+diff --git c/designs/Beacon.qml w/designs/Beacon.qml
+index 3916bef..b322fe9 100644
+--- c/designs/Beacon.qml
++++ w/designs/Beacon.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Beams sweep across the Omarchy logo and light it row by row, then a wave of
+@@ -13,12 +14,12 @@ IconLock {
+   padColumns: 30
+   padRows: 8
+   effectOptions: ({
+-    beams: ["--beam-gradient-stops", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.borderActive),
+-            "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
++    beams: ["--beam-gradient-stops", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.borderActive),
++            "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
+     pulse: { effect: "colorshift", args: ["--cycles", "1", "--travel-direction", "radial",
+-             "--gradient-stops", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
+-             "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)] },
+-    unstable: ["--unstable-color", Ttfx.hex(Color.lock.textError),
+-               "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++             "--gradient-stops", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
++             "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)] },
++    unstable: ["--unstable-color", Ttfx.hex(Commons.Color.lock.textError),
++               "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+   })
+ }
+diff --git c/designs/Binary.qml w/designs/Binary.qml
+index 9a37f01..80fc91d 100644
+--- c/designs/Binary.qml
++++ w/designs/Binary.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Streams of ones and zeros snake in from the edges and settle as the cells
+@@ -13,10 +14,10 @@ IconLock {
+   padRows: 12
+   logoScale: 0.36
+   effectOptions: ({
+-    binarypath: ["--binary-colors", Ttfx.hex(Color.muted), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
++    binarypath: ["--binary-colors", Ttfx.hex(Commons.Color.muted), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
+                  "--active-binary-groups", "0.1",
+-                 "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
+-    unstable: ["--unstable-color", Ttfx.hex(Color.lock.textError),
+-               "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++                 "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
++    unstable: ["--unstable-color", Ttfx.hex(Commons.Color.lock.textError),
++               "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+   })
+ }
+diff --git c/designs/BootField.qml w/designs/BootField.qml
+index 101aa7d..33409d0 100644
+--- c/designs/BootField.qml
++++ w/designs/BootField.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // One labelled row in the boot layout editor. `control` picks the widget:
++import qs.Commons as Commons
+ // "text" (free text), "dropdown" (pick from `options`), "toggle" (on/off) or
+ // "stepper" (-/+ around a number).
+ Row {
+@@ -22,9 +23,9 @@ Row {
+   signal step(int delta)
+   signal escaped()   // the text field has focus, so it forwards Escape
+ 
+-  readonly property color fg: Color.menu.text
++  readonly property color fg: Commons.Color.menu.text
+   readonly property color mut: Qt.rgba(fg.r, fg.g, fg.b, 0.6)
+-  readonly property color accent: Color.accent
++  readonly property color accent: Commons.Color.accent
+ 
+   spacing: Style.space(12)
+   height: control === "dropdown" && expanded
+@@ -65,7 +66,7 @@ Row {
+       clip: true
+       color: field.fg
+       selectionColor: field.accent
+-      selectedTextColor: Color.background
++      selectedTextColor: Commons.Color.background
+       font.family: Style.font.menuFamily
+       font.pixelSize: Style.font.bodySmall
+       text: field.value
+@@ -168,7 +169,7 @@ Row {
+       width: Style.space(18)
+       height: Style.space(18)
+       radius: width / 2
+-      color: Color.background
++      color: Commons.Color.background
+       anchors.verticalCenter: parent.verticalCenter
+       x: field.on ? parent.width - width - Style.space(3) : Style.space(3)
+       Behavior on x { NumberAnimation { duration: 100 } }
+diff --git c/designs/Bounce.qml w/designs/Bounce.qml
+index c7711c3..808b4cd 100644
+--- c/designs/Bounce.qml
++++ w/designs/Bounce.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The clock rains down as bouncing balls that land as its digits. Each new
+@@ -34,8 +35,8 @@ DesignBase {
+     rows: Math.floor((lock.height * 0.62) / Math.max(1, cellHeight))
+     effectOptions: ({
+       bouncyballs: ["--ball-symbols", "●", "o", "•", "--ball-delay", "2",
+-                    "--ball-colors", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.textError),
+-                    "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++                    "--ball-colors", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.textError),
++                    "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -50,7 +51,7 @@ DesignBase {
+     radius: 26
+     showLockGlyph: false
+     shakeOnFail: false
+-    color: lock.withAlpha(Color.lock.background, 0.6)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.6)
+   }
+ 
+   Connections {
+diff --git c/designs/Calendar.qml w/designs/Calendar.qml
+index f069840..cba8e1e 100644
+--- c/designs/Calendar.qml
++++ w/designs/Calendar.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -36,9 +37,9 @@ DesignBase {
+       width: calCol.implicitWidth + 48
+       height: calCol.implicitHeight + 40
+       radius: 18
+-      color: lock.withAlpha(Color.lock.background, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.75)
+       border.width: 1
+-      border.color: lock.withAlpha(Color.lock.text, 0.12)
++      border.color: lock.withAlpha(Commons.Color.lock.text, 0.12)
+       anchors.verticalCenter: parent.verticalCenter
+ 
+       Column {
+@@ -48,7 +49,7 @@ DesignBase {
+ 
+         Text {
+           text: Qt.formatDate(lock.now, "MMMM yyyy")
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Style.font.heading
+           font.weight: Font.DemiBold
+@@ -62,7 +63,7 @@ DesignBase {
+               width: lock.cell
+               horizontalAlignment: Text.AlignHCenter
+               text: modelData
+-              color: lock.withAlpha(Color.lock.text, 0.5)
++              color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+               font.family: Style.font.family
+               font.pixelSize: Style.font.caption
+             }
+@@ -81,12 +82,12 @@ DesignBase {
+                 anchors.centerIn: parent
+                 width: 32; height: 32; radius: 16
+                 visible: parent.modelData === lock.now.getDate()
+-                color: Color.lock.borderActive
++                color: Commons.Color.lock.borderActive
+               }
+               Text {
+                 anchors.centerIn: parent
+                 text: parent.modelData > 0 ? parent.modelData : ""
+-                color: parent.modelData === lock.now.getDate() ? Color.background : Color.lock.text
++                color: parent.modelData === lock.now.getDate() ? Commons.Color.background : Commons.Color.lock.text
+                 font.family: Style.font.family
+                 font.pixelSize: Style.font.body
+                 font.weight: parent.modelData === lock.now.getDate() ? Font.Bold : Font.Normal
+@@ -102,7 +103,7 @@ DesignBase {
+       spacing: 20
+       Text {
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 8)
+         font.weight: Font.DemiBold
+@@ -110,7 +111,7 @@ DesignBase {
+       }
+       Text {
+         text: Qt.formatDate(lock.now, "dddd")
+-        color: lock.withAlpha(Color.lock.text, 0.75)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+       }
+@@ -127,7 +128,7 @@ DesignBase {
+         opacity: lock.snapshotMode ? 0 : 1
+         text: lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  Touch sensor or press Enter") : "Press Enter to unlock"
+         textFormat: Text.PlainText
+-        color: lock.withAlpha(Color.lock.text, 0.5)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.bodySmall
+       }
+diff --git c/designs/Card.qml w/designs/Card.qml
+index c3ea48c..f01307b 100644
+--- c/designs/Card.qml
++++ w/designs/Card.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -26,7 +27,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 9)
+       font.weight: Font.DemiBold
+@@ -37,7 +38,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd, d MMMM")
+-      color: lock.withAlpha(Color.lock.text, 0.85)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.85)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.display
+       font.letterSpacing: 1
+@@ -54,9 +55,9 @@ DesignBase {
+     anchors.verticalCenter: parent.verticalCenter
+     anchors.verticalCenterOffset: Math.round(parent.height * 0.12)
+     radius: Math.max(Style.cornerRadius, 12) + 8
+-    color: lock.withAlpha(Color.lock.background, 0.55)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.55)
+     border.width: 1
+-    border.color: lock.withAlpha(Color.lock.text, 0.12)
++    border.color: lock.withAlpha(Commons.Color.lock.text, 0.12)
+     layer.enabled: true
+     layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Qt.rgba(0, 0, 0, 0.5); shadowBlur: 1.0; shadowVerticalOffset: 12 }
+ 
+@@ -72,7 +73,7 @@ DesignBase {
+         width: 72
+         fontSize: Math.round(Style.font.baseSize * 2.6)
+         borderWidth: 3
+-        borderColor: lock.withAlpha(Color.lock.text, 0.25)
++        borderColor: lock.withAlpha(Commons.Color.lock.text, 0.25)
+         shadow: false
+       }
+ 
+@@ -82,7 +83,7 @@ DesignBase {
+         Text {
+           anchors.horizontalCenter: parent.horizontalCenter
+           text: lock.greeting() + ", " + lock.userName
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Style.font.display
+           font.weight: Font.DemiBold
+@@ -92,7 +93,7 @@ DesignBase {
+           text: lock.failedAttempts > 0
+             ? (lock.failedAttempts + (lock.failedAttempts === 1 ? " failed attempt" : " failed attempts"))
+             : "Enter your password to unlock"
+-          color: lock.failedAttempts > 0 ? Color.lock.textError : Color.lock.placeholder
++          color: lock.failedAttempts > 0 ? Commons.Color.lock.textError : Commons.Color.lock.placeholder
+           font.family: Style.font.family
+           font.pixelSize: Style.font.subtitle
+         }
+@@ -117,7 +118,7 @@ DesignBase {
+       ? "󰱻  Look at sensor or type password  ·  Esc clears"
+       : (lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  Touch sensor or type password  ·  Esc clears") : "󰌾  Locked  ·  Esc clears input"))
+     textFormat: Text.PlainText
+-    color: lock.withAlpha(Color.lock.text, 0.55)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.55)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.bodySmall
+     font.letterSpacing: 1
+diff --git c/designs/Cinema.qml w/designs/Cinema.qml
+index e643c1d..5e12425 100644
+--- c/designs/Cinema.qml
++++ w/designs/Cinema.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -64,7 +65,7 @@ DesignBase {
+           : (lock.authenticatingPassword ? "Checking…"
+           : lock.greeting() + ", " + lock.userName + ". Enter your password to continue.")
+         textFormat: Text.PlainText
+-        color: lock.errorState ? Color.lock.textError : "#f2f2f2"
++        color: lock.errorState ? Commons.Color.lock.textError : "#f2f2f2"
+         font.family: Style.font.family
+         font.pixelSize: Style.font.heading
+         font.italic: true
+diff --git c/designs/Cipher.qml w/designs/Cipher.qml
+index 3c6e719..20e35d1 100644
+--- c/designs/Cipher.qml
++++ w/designs/Cipher.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A block clock drawn by ttfx: it decrypts when the screen locks, slides the
+@@ -13,7 +14,7 @@ DesignBase {
+ 
+   readonly property int cell: Math.max(14, Math.round(Math.min(width / 120, height / 40)))
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 1.35) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 1.35) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -48,7 +49,7 @@ DesignBase {
+       frameRate: 120
+       margin: 1
+       pixelSize: Style.font.heading
+-      textColor: lock.withAlpha(Color.lock.text, 0.75)
++      textColor: lock.withAlpha(Commons.Color.lock.text, 0.75)
+     }
+ 
+     PasswordField {
+@@ -61,7 +62,7 @@ DesignBase {
+       outlineThickness: 1
+       shakeOnFail: false
+       showLockGlyph: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+       placeholder: "passphrase"
+     }
+   }
+diff --git c/designs/ClipDesign.qml w/designs/ClipDesign.qml
+index 0f5cdbd..6967495 100644
+--- c/designs/ClipDesign.qml
++++ w/designs/ClipDesign.qml
+@@ -3,6 +3,7 @@ import Quickshell
+ import qs.Commons
+ 
+ // A design built around one clip: its first frame is the lock screen and the
++import qs.Commons as Commons
+ // rest of it is the unlock. Storm, Eyes, Rally and River are this with
+ // different files from ~/.config/omarchy/lock-videos.
+ DesignBase {
+@@ -69,7 +70,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 5)
+         font.weight: Font.Light
+@@ -79,7 +80,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: Qt.formatDate(lock.now, "dddd d MMMM").toUpperCase()
+-        color: lock.withAlpha(Color.lock.text, 0.7)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.bodySmall
+         font.letterSpacing: 4
+@@ -102,7 +103,7 @@ DesignBase {
+         showLockGlyph: false
+         shakeOnFail: false
+         placeholder: "Password"
+-        color: lock.withAlpha(Color.lock.background, 0.55)
++        color: lock.withAlpha(Commons.Color.lock.background, 0.55)
+       }
+ 
+       Text {
+@@ -110,7 +111,7 @@ DesignBase {
+         visible: lock.clipName.length > 0 && still.failed
+         text: "Missing " + lock.clipName + " in ~/.config/omarchy/lock-videos"
+         textFormat: Text.PlainText
+-        color: lock.withAlpha(Color.lock.text, 0.55)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.55)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.bodySmall
+         font.letterSpacing: 1
+diff --git c/designs/Companion.qml w/designs/Companion.qml
+index 15279ef..708b66d 100644
+--- c/designs/Companion.qml
++++ w/designs/Companion.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // Shown on monitors that are not the input monitor. Still takes keyboard
++import qs.Commons as Commons
+ // input so typing works wherever focus lands.
+ DesignBase {
+   id: lock
+@@ -30,7 +31,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 9)
+       font.weight: Font.DemiBold
+@@ -39,7 +40,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd, d MMMM")
+-      color: lock.withAlpha(Color.lock.text, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.display
+     }
+@@ -53,7 +54,7 @@ DesignBase {
+           : (lock.authenticatingPassword ? "Checking…"
+           : (lock.passwordText.length > 0 ? (lock.passwordVisible ? lock.passwordText : "●".repeat(Math.min(lock.passwordText.length, 24))) : "󰌾"))
+         textFormat: Text.PlainText
+-        color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, lock.passwordVisible ? 0.9 : 0.55)
++        color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, lock.passwordVisible ? 0.9 : 0.55)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.heading
+         font.letterSpacing: lock.passwordVisible ? 1 : 4
+diff --git c/designs/Constellation.qml w/designs/Constellation.qml
+index 64893b5..85ad1c7 100644
+--- c/designs/Constellation.qml
++++ w/designs/Constellation.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // Each character puts a star in the sky and draws the line to the one before
++import qs.Commons as Commons
+ // it, so a password writes out its own figure. Backspace takes the last star
+ // back, a wrong password burns the lines red.
+ DesignBase {
+@@ -70,7 +71,7 @@ DesignBase {
+       radius: width / 2
+       x: lock.width * lock.scatter(seed)
+       y: lock.height * lock.scatter(seed * 7)
+-      color: lock.withAlpha(Color.lock.text, 0.12 + lock.scatter(seed * 11) * 0.35)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.12 + lock.scatter(seed * 11) * 0.35)
+ 
+       SequentialAnimation on opacity {
+         loops: Animation.Infinite
+@@ -110,7 +111,7 @@ DesignBase {
+         height: 2
+         transformOrigin: Item.Left
+         rotation: prev ? Math.atan2(py - prev.py, px - prev.px) * 180 / Math.PI : 0
+-        color: lock.alarm ? Color.lock.textError : lock.withAlpha(Color.lock.borderActive, 0.55)
++        color: lock.alarm ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.borderActive, 0.55)
+         Behavior on color { ColorAnimation { duration: 200 } }
+ 
+         opacity: 0
+@@ -132,7 +133,7 @@ DesignBase {
+         width: 26
+         height: 26
+         radius: 13
+-        color: lock.withAlpha(lock.alarm ? Color.lock.textError : Color.lock.borderActive, 0.18)
++        color: lock.withAlpha(lock.alarm ? Commons.Color.lock.textError : Commons.Color.lock.borderActive, 0.18)
+       }
+ 
+       Rectangle {
+@@ -140,7 +141,7 @@ DesignBase {
+         width: 9
+         height: 9
+         radius: 4.5
+-        color: lock.alarm ? Color.lock.textError : Color.lock.text
++        color: lock.alarm ? Commons.Color.lock.textError : Commons.Color.lock.text
+         Behavior on color { ColorAnimation { duration: 200 } }
+       }
+ 
+@@ -160,7 +161,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 7)
+       font.weight: Font.Light
+@@ -170,7 +171,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd d MMMM").toUpperCase()
+-      color: lock.withAlpha(Color.lock.text, 0.6)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.6)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.bodySmall
+       font.letterSpacing: 5
+@@ -193,13 +194,13 @@ DesignBase {
+       showLockGlyph: false
+       shakeOnFail: false
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.lock.background, 0.55)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.55)
+     }
+ 
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: stars.count === 0 ? "Type to draw" : stars.count + (stars.count === 1 ? " star" : " stars")
+-      color: lock.withAlpha(Color.lock.text, 0.5)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.bodySmall
+       font.letterSpacing: 2
+diff --git c/designs/Core.qml w/designs/Core.qml
+index eab8cfa..38ba8ab 100644
+--- c/designs/Core.qml
++++ w/designs/Core.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A laser etches a large Omarchy logo, and the password is typed into its
+@@ -10,7 +11,7 @@ DesignBase {
+   inputItem: input
+   flashOnFail: false
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 2) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 2) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -33,11 +34,11 @@ DesignBase {
+     pixelSize: Math.max(8, Math.round(lock.height * 0.66 / Math.max(1, textRows) / 1.3))
+     effectOptions: ({
+       laseretch: ["--etch-speed", "8",
+-                  "--laser-gradient-stops", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.borderActive),
+-                  "--spark-gradient-stops", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.borderActive),
+-                  "--cool-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.muted),
+-                  "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
+-      crumble: ["--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++                  "--laser-gradient-stops", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.borderActive),
++                  "--spark-gradient-stops", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.borderActive),
++                  "--cool-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.muted),
++                  "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
++      crumble: ["--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -50,7 +51,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.greeting().toLowerCase()
+-      color: lock.withAlpha(Color.lock.text, 0.45)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.45)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.letterSpacing: 3
+@@ -65,7 +66,7 @@ DesignBase {
+         anchors.centerIn: parent
+         visible: lock.passwordText.length > 0
+         text: Ttfx.masked(lock, "●", 14)
+-        color: lock.errorState ? Color.lock.textError : Color.lock.text
++        color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(lock.height * 0.034)
+         font.letterSpacing: Math.round(lock.height * 0.008)
+@@ -76,7 +77,7 @@ DesignBase {
+         anchors.centerIn: parent
+         visible: lock.passwordText.length === 0
+         text: Ttfx.inputStatus(lock, "type to unlock")
+-        color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, lock.authenticatingPassword ? 0.9 : 0.35)
++        color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, lock.authenticatingPassword ? 0.9 : 0.35)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.title
+         font.italic: lock.errorState
+@@ -89,7 +90,7 @@ DesignBase {
+         width: parent.width * (lock.passwordText.length > 0 ? 0.8 : 0.3)
+         height: 2
+         radius: 1
+-        color: lock.errorState ? Color.lock.textError : Color.lock.borderActive
++        color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.borderActive
+         opacity: 0.7
+         Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+       }
+@@ -101,7 +102,7 @@ DesignBase {
+       Text {
+         anchors.verticalCenter: parent.verticalCenter
+         text: lock.clock("HH:mm") + "  ·  " + lock.clock("ddd d MMM").toLowerCase()
+-        color: lock.withAlpha(Color.lock.text, 0.35)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.35)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.body
+       }
+diff --git c/designs/Dayline.qml w/designs/Dayline.qml
+index 200afe8..1d8f264 100644
+--- c/designs/Dayline.qml
++++ w/designs/Dayline.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -24,7 +25,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 9)
+       font.weight: Font.DemiBold
+@@ -42,20 +43,20 @@ DesignBase {
+         width: parent.width
+         height: 6
+         radius: 3
+-        color: lock.withAlpha(Color.lock.text, 0.2)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.2)
+         Rectangle {
+           width: parent.width * lock.dayFraction
+           height: parent.height
+           radius: 3
+-          color: Color.lock.borderActive
++          color: Commons.Color.lock.borderActive
+         }
+         Rectangle {
+           x: parent.width * lock.dayFraction - 7
+           y: -4
+           width: 14; height: 14; radius: 7
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           border.width: 3
+-          border.color: Color.lock.borderActive
++          border.color: Commons.Color.lock.borderActive
+         }
+       }
+ 
+@@ -68,7 +69,7 @@ DesignBase {
+             required property string modelData
+             width: lock.lineWidth / 4
+             text: modelData
+-            color: lock.withAlpha(Color.lock.text, 0.5)
++            color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+             font.family: Style.font.family
+             font.pixelSize: Style.font.caption
+           }
+@@ -79,7 +80,7 @@ DesignBase {
+         anchors.topMargin: 8
+         anchors.right: parent.right
+         text: "24"
+-        color: lock.withAlpha(Color.lock.text, 0.5)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.caption
+       }
+@@ -88,7 +89,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd, d MMMM") + "  ·  " + Math.round(lock.dayFraction * 100) + "% of the day"
+-      color: lock.withAlpha(Color.lock.text, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.subtitle
+       font.letterSpacing: 1
+diff --git c/designs/DesignBase.qml w/designs/DesignBase.qml
+index 73b66b4..ccc8079 100644
+--- c/designs/DesignBase.qml
++++ w/designs/DesignBase.qml
+@@ -3,6 +3,7 @@ import Quickshell
+ import Quickshell.Io
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ Item {
+   id: base
+ 
+@@ -166,8 +167,8 @@ Item {
+       width: asking ? askLabel.implicitWidth + 24 : 34
+       height: 34
+       radius: 17
+-      color: asking ? base.withAlpha(Color.lock.textError, 0.9)
+-        : base.withAlpha(Color.lock.text, powerArea.containsMouse ? 0.18 : 0.08)
++      color: asking ? base.withAlpha(Commons.Color.lock.textError, 0.9)
++        : base.withAlpha(Commons.Color.lock.text, powerArea.containsMouse ? 0.18 : 0.08)
+       Behavior on color { ColorAnimation { duration: 120 } }
+       Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+ 
+@@ -175,7 +176,7 @@ Item {
+         anchors.centerIn: parent
+         visible: !powerButton.asking
+         text: powerButton.glyph
+-        color: base.withAlpha(Color.lock.text, 0.75)
++        color: base.withAlpha(Commons.Color.lock.text, 0.75)
+         font.family: Style.font.family
+         font.pixelSize: 17
+       }
+@@ -186,7 +187,7 @@ Item {
+         visible: powerButton.asking
+         text: powerButton.label + "?"
+         textFormat: Text.PlainText
+-        color: Color.background
++        color: Commons.Color.background
+         font.family: Style.font.family
+         font.pixelSize: Style.font.caption
+         font.weight: Font.DemiBold
+@@ -229,7 +230,7 @@ Item {
+     id: failFlash
+     anchors.fill: parent
+     z: 1000
+-    color: Color.lock.textError
++    color: Commons.Color.lock.textError
+     opacity: 0
+     visible: opacity > 0
+   }
+diff --git c/designs/DesignerItem.qml w/designs/DesignerItem.qml
+index a25269e..53a248c 100644
+--- c/designs/DesignerItem.qml
++++ w/designs/DesignerItem.qml
+@@ -3,6 +3,7 @@ import QtQuick.Effects
+ import qs.Commons
+ 
+ // One piece of a design made in the visual designer. The designer's canvas and
++import qs.Commons as Commons
+ // the generated design file both render through this, so what you arrange is
+ // exactly what the lock screen draws.
+ //
+@@ -41,6 +42,7 @@ Item {
+       + 'import QtQuick.Effects\n'
+       + 'import QtMultimedia\n'
+       + 'import qs.Commons\n'
++      + 'import qs.Commons as Commons\n'
+       + 'import "' + Qt.resolvedUrl(".") + '"\n'
+       + 'Item {\n  anchors.fill: parent\n' + customQml + '\n}'
+     try {
+@@ -59,7 +61,7 @@ Item {
+     visible: piece.customError.length > 0
+     text: piece.customError
+     textFormat: Text.PlainText
+-    color: Color.lock.textError
++    color: Commons.Color.lock.textError
+     font.family: Style.font.family
+     font.pixelSize: 13
+     wrapMode: Text.Wrap
+@@ -91,15 +93,15 @@ Item {
+     var r = String(role || "text")
+     if (r.charAt(0) === "#") return r
+     switch (r) {
+-    case "accent": return Color.lock.borderActive
+-    case "error": return Color.lock.textError
+-    case "placeholder": return Color.lock.placeholder
+-    case "surface": return Color.lock.background
+-    case "background": return Color.background
++    case "accent": return Commons.Color.lock.borderActive
++    case "error": return Commons.Color.lock.textError
++    case "placeholder": return Commons.Color.lock.placeholder
++    case "surface": return Commons.Color.lock.background
++    case "background": return Commons.Color.background
+     case "black": return "#000000"
+     case "white": return "#ffffff"
+     }
+-    return Color.lock.text
++    return Commons.Color.lock.text
+   }
+ 
+   function tint(role, alpha) {
+@@ -132,7 +134,7 @@ Item {
+   // the property can be missing there.
+   readonly property bool fingerprintFailed: !!(lock && lock.fingerprintStatusIsError && (lock.fingerprintStatus || "").length > 0)
+   readonly property color textColor: (kind === "status" && lock && (lock.failureMessage.length > 0 || fingerprintFailed))
+-    ? Color.lock.textError
++    ? Commons.Color.lock.textError
+     : tint(p("color", "text"), p("alpha", 1))
+ 
+   Loader {
+@@ -244,7 +246,7 @@ Item {
+       readonly property int count: piece.lock ? piece.lock.passwordText.length : 0
+       readonly property int shown: Math.min(count, Math.max(1, Math.round(piece.p("max", 24))))
+       readonly property color dotColor: piece.lock && piece.lock.errorState
+-        ? Color.lock.textError : piece.tint(piece.p("color", "text"), piece.p("alpha", 0.9))
++        ? Commons.Color.lock.textError : piece.tint(piece.p("color", "text"), piece.p("alpha", 0.9))
+ 
+       LockInput {
+         id: hidden
+diff --git c/designs/Digital.qml w/designs/Digital.qml
+index 82dd2ca..aee3a3c 100644
+--- c/designs/Digital.qml
++++ w/designs/Digital.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // ttfx's matrix: code rain across the top of the screen that settles into the
+@@ -10,7 +11,7 @@ DesignBase {
+   inputItem: field.input
+   flashOnFail: false
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 1.7) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 1.7) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -32,9 +33,9 @@ DesignBase {
+     anchorText: "s"
+     effectOptions: ({
+       matrix: ["--rain-time", "3", "--resolve-delay", "2",
+-               "--highlight-color", Ttfx.hex(Color.lock.text),
+-               "--rain-color-gradient", Ttfx.hex(Color.muted), Ttfx.hex(Color.lock.borderActive),
+-               "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++               "--highlight-color", Ttfx.hex(Commons.Color.lock.text),
++               "--rain-color-gradient", Ttfx.hex(Commons.Color.muted), Ttfx.hex(Commons.Color.lock.borderActive),
++               "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -47,7 +48,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("yyyy-MM-dd  ddd").toLowerCase()
+-      color: lock.withAlpha(Color.lock.borderActive, 0.8)
++      color: lock.withAlpha(Commons.Color.lock.borderActive, 0.8)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 3
+@@ -62,7 +63,7 @@ DesignBase {
+       radius: 0
+       outlineThickness: 1
+       showLockGlyph: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+       placeholder: "access code"
+     }
+   }
+diff --git c/designs/Dock.qml w/designs/Dock.qml
+index 50c9d94..30d4707 100644
+--- c/designs/Dock.qml
++++ w/designs/Dock.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -23,13 +24,13 @@ DesignBase {
+     anchors.right: parent.right
+     anchors.bottom: parent.bottom
+     height: lock.barHeight
+-    color: lock.withAlpha(Color.lock.background, 0.82)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.82)
+ 
+     Rectangle {
+       anchors.top: parent.top
+       width: parent.width
+       height: 1
+-      color: lock.withAlpha(Color.lock.text, 0.14)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.14)
+     }
+ 
+     Row {
+@@ -49,7 +50,7 @@ DesignBase {
+         spacing: 1
+         Text {
+           text: lock.userName + "@" + lock.hostName
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Style.font.subtitle
+           font.weight: Font.DemiBold
+@@ -59,7 +60,7 @@ DesignBase {
+             : (lock.authenticatingPassword ? "Checking…"
+             : (lock.fingerprintConfigured ? lock.fingerprintHint("Locked, touch sensor or type password") : "Locked"))
+           textFormat: Text.PlainText
+-          color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++          color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+           font.family: Style.font.family
+           font.pixelSize: Style.font.caption
+         }
+@@ -76,7 +77,7 @@ DesignBase {
+       outlineThickness: 1
+       textAlignment: TextInput.AlignLeft
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.background, 0.6)
++      color: lock.withAlpha(Commons.Color.background, 0.6)
+     }
+ 
+     Row {
+@@ -87,15 +88,15 @@ DesignBase {
+       Text {
+         anchors.verticalCenter: parent.verticalCenter
+         text: Qt.formatDate(lock.now, "ddd d MMM")
+-        color: lock.withAlpha(Color.lock.text, 0.65)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.65)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.subtitle
+       }
+-      Rectangle { width: 1; height: 24; color: lock.withAlpha(Color.lock.text, 0.2); anchors.verticalCenter: parent.verticalCenter }
++      Rectangle { width: 1; height: 24; color: lock.withAlpha(Commons.Color.lock.text, 0.2); anchors.verticalCenter: parent.verticalCenter }
+       Text {
+         anchors.verticalCenter: parent.verticalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+         font.weight: Font.DemiBold
+diff --git c/designs/Editorial.qml w/designs/Editorial.qml
+index c88f0af..6ff6a2f 100644
+--- c/designs/Editorial.qml
++++ w/designs/Editorial.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -23,10 +24,10 @@ DesignBase {
+     anchors.top: parent.top
+     anchors.margins: lock.margin
+     spacing: 12
+-    Rectangle { width: 10; height: 10; radius: 5; color: Color.lock.borderActive; anchors.verticalCenter: parent.verticalCenter }
++    Rectangle { width: 10; height: 10; radius: 5; color: Commons.Color.lock.borderActive; anchors.verticalCenter: parent.verticalCenter }
+     Text {
+       text: lock.hostName.toUpperCase() + "  ·  " + lock.userName
+-      color: lock.withAlpha(Color.lock.text, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.subtitle
+       font.letterSpacing: 3
+@@ -40,7 +41,7 @@ DesignBase {
+     opacity: lock.snapshotMode ? 0 : 1
+     text: lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  FINGERPRINT READY").toUpperCase() : "󰌾  LOCKED"
+     textFormat: Text.PlainText
+-    color: lock.withAlpha(Color.lock.text, 0.75)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.subtitle
+     font.letterSpacing: 3
+@@ -60,7 +61,7 @@ DesignBase {
+       // column collapse so the measured field geometry matches the live lock.
+       visible: !lock.snapshotMode
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 15)
+       font.weight: Font.Bold
+@@ -73,20 +74,20 @@ DesignBase {
+     Row {
+       visible: !lock.snapshotMode
+       spacing: 14
+-      Rectangle { width: 4; height: dateCol.implicitHeight; color: Color.lock.borderActive; radius: 2 }
++      Rectangle { width: 4; height: dateCol.implicitHeight; color: Commons.Color.lock.borderActive; radius: 2 }
+       Column {
+         id: dateCol
+         spacing: 2
+         Text {
+           text: Qt.formatDate(lock.now, "dddd")
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Style.font.displayLarge
+           font.weight: Font.DemiBold
+         }
+         Text {
+           text: Qt.formatDate(lock.now, "d MMMM yyyy")
+-          color: lock.withAlpha(Color.lock.text, 0.75)
++          color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+           font.family: Style.font.family
+           font.pixelSize: Style.font.heading
+           font.letterSpacing: 1
+@@ -103,7 +104,7 @@ DesignBase {
+       height: 56
+       textAlignment: TextInput.AlignLeft
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.lock.background, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.75)
+     }
+ 
+     Text {
+@@ -111,7 +112,7 @@ DesignBase {
+       text: lock.failedAttempts > 0
+         ? lock.failedAttempts + " failed " + (lock.failedAttempts === 1 ? "attempt" : "attempts")
+         : "Enter to unlock  ·  Esc to clear"
+-      color: lock.failedAttempts > 0 ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++      color: lock.failedAttempts > 0 ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.bodySmall
+       font.letterSpacing: 1
+diff --git c/designs/Ember.qml w/designs/Ember.qml
+index e7ccf65..b47c799 100644
+--- c/designs/Ember.qml
++++ w/designs/Ember.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A block clock that burns into place: ttfx's burn effect from the theme's
+@@ -13,10 +14,10 @@ DesignBase {
+   flashOnFail: false
+ 
+   readonly property int cell: Math.max(14, Math.round(Math.min(width / 100, height / 34)))
+-  readonly property var fire: [Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Qt.lighter(Color.lock.borderActive, 1.3)),
+-                              Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.textError), Ttfx.hex(Qt.darker(Color.lock.textError, 2.2))]
++  readonly property var fire: [Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Qt.lighter(Commons.Color.lock.borderActive, 1.3)),
++                              Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Qt.darker(Commons.Color.lock.textError, 2.2))]
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 1.6) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 1.6) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -38,15 +39,15 @@ DesignBase {
+       margin: 2
+       pixelSize: lock.cell
+       effectOptions: ({
+-        burn: ["--starting-color", Ttfx.hex(Color.muted), "--burn-colors"].concat(lock.fire)
+-          .concat(["--smoke-chance", "0.25", "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)])
++        burn: ["--starting-color", Ttfx.hex(Commons.Color.muted), "--burn-colors"].concat(lock.fire)
++          .concat(["--smoke-chance", "0.25", "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)])
+       })
+     }
+ 
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("dddd d MMMM").toUpperCase()
+-      color: lock.withAlpha(Color.lock.text, 0.55)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.55)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.body
+       font.letterSpacing: 4
+@@ -61,7 +62,7 @@ DesignBase {
+       radius: 23
+       outlineThickness: 1
+       showLockGlyph: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+     }
+   }
+ 
+diff --git c/designs/Etch.qml w/designs/Etch.qml
+index 7120077..a46c617 100644
+--- c/designs/Etch.qml
++++ w/designs/Etch.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A laser etches the greeting and the time onto the screen, sparks cooling
+@@ -35,10 +36,10 @@ DesignBase {
+       pixelSize: Math.max(24, Math.round(lock.height / 18))
+       effectOptions: ({
+         laseretch: ["--etch-speed", "1", "--etch-delay", "2",
+-                    "--laser-gradient-stops", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.borderActive),
+-                    "--spark-gradient-stops", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.textError),
+-                    "--cool-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.muted),
+-                    "--final-gradient-stops", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.borderActive),
++                    "--laser-gradient-stops", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.borderActive),
++                    "--spark-gradient-stops", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.textError),
++                    "--cool-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.muted),
++                    "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.borderActive),
+                     "--final-gradient-direction", "horizontal"]
+       })
+     }
+@@ -53,7 +54,7 @@ DesignBase {
+       outlineThickness: 1
+       showLockGlyph: false
+       textAlignment: TextInput.AlignLeft
+-      color: lock.withAlpha(Color.lock.background, 0.5)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.5)
+     }
+   }
+ 
+diff --git c/designs/EyeButton.qml w/designs/EyeButton.qml
+index 258e27e..d5880e0 100644
+--- c/designs/EyeButton.qml
++++ w/designs/EyeButton.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // Show/hide password button for designs that draw their own input.
++import qs.Commons as Commons
+ Item {
+   id: button
+   property var lock: null
+@@ -13,7 +14,7 @@ Item {
+   Text {
+     anchors.centerIn: parent
+     text: button.revealed ? "󰈉" : "󰈈"
+-    color: button.revealed ? Color.lock.borderActive : Color.lock.placeholder
++    color: button.revealed ? Commons.Color.lock.borderActive : Commons.Color.lock.placeholder
+     font.family: Style.font.family
+     font.pixelSize: button.size
+   }
+diff --git c/designs/Fireworks.qml w/designs/Fireworks.qml
+index ea18ee8..e153f40 100644
+--- c/designs/Fireworks.qml
++++ w/designs/Fireworks.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Shells launch from the bottom of the screen, burst in the theme colors and
+@@ -33,8 +34,8 @@ DesignBase {
+     rows: Math.floor(lock.height * 0.7 / Math.max(1, cellHeight))
+     effectOptions: ({
+       fireworks: ["--launch-delay", "20", "--firework-volume", "0.08", "--firework-symbol", "●",
+-                  "--firework-colors", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.textError), Ttfx.hex(Qt.lighter(Color.lock.borderActive, 1.4)),
+-                  "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++                  "--firework-colors", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Qt.lighter(Commons.Color.lock.borderActive, 1.4)),
++                  "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -46,7 +47,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.greeting()
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+     }
+@@ -60,7 +61,7 @@ DesignBase {
+       radius: 25
+       showLockGlyph: false
+       shakeOnFail: false
+-      color: lock.withAlpha(Color.lock.background, 0.6)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.6)
+     }
+   }
+ 
+diff --git c/designs/Flip.qml w/designs/Flip.qml
+index 169b0cd..4bdb113 100644
+--- c/designs/Flip.qml
++++ w/designs/Flip.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -24,13 +25,13 @@ DesignBase {
+     width: lock.tileW
+     height: lock.tileH
+     radius: 14
+-    color: lock.withAlpha(Color.lock.background, 0.9)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.9)
+     border.width: 1
+-    border.color: lock.withAlpha(Color.lock.text, 0.1)
++    border.color: lock.withAlpha(Commons.Color.lock.text, 0.1)
+     Text {
+       anchors.centerIn: parent
+       text: parent.digit
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(lock.tileH * 0.72)
+       font.weight: Font.Bold
+@@ -55,8 +56,8 @@ DesignBase {
+       Column {
+         anchors.verticalCenter: parent.verticalCenter
+         spacing: 22
+-        Rectangle { width: 12; height: 12; radius: 6; color: Color.lock.borderActive }
+-        Rectangle { width: 12; height: 12; radius: 6; color: Color.lock.borderActive }
++        Rectangle { width: 12; height: 12; radius: 6; color: Commons.Color.lock.borderActive }
++        Rectangle { width: 12; height: 12; radius: 6; color: Commons.Color.lock.borderActive }
+       }
+       Tile { digit: lock.mm.charAt(0) }
+       Tile { digit: lock.mm.charAt(1) }
+@@ -65,7 +66,7 @@ DesignBase {
+         anchors.verticalCenter: parent.verticalCenter
+         visible: lock.meridiem.length > 0
+         text: lock.meridiem
+-        color: lock.withAlpha(Color.lock.text, 0.7)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+         font.family: Style.font.family
+         font.pixelSize: Math.round(lock.tileH * 0.2)
+         font.weight: Font.Bold
+@@ -75,7 +76,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd, d MMMM yyyy").toUpperCase()
+-      color: lock.withAlpha(Color.lock.text, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.subtitle
+       font.letterSpacing: 4
+diff --git c/designs/Forge.qml w/designs/Forge.qml
+index 3852b50..a4741cf 100644
+--- c/designs/Forge.qml
++++ w/designs/Forge.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The Omarchy logo burns into place in the theme's colors, from the text
+@@ -12,8 +13,8 @@ IconLock {
+   failRate: 120
+   backgroundDarkness: 2
+   effectOptions: ({
+-    burn: ["--starting-color", Ttfx.hex(Color.muted), "--burn-colors", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Qt.lighter(Color.lock.borderActive, 1.3)),
+-           Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.textError), Ttfx.hex(Qt.darker(Color.lock.textError, 2.2)),
+-           "--smoke-chance", "0.2", "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++    burn: ["--starting-color", Ttfx.hex(Commons.Color.muted), "--burn-colors", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Qt.lighter(Commons.Color.lock.borderActive, 1.3)),
++           Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Qt.darker(Commons.Color.lock.textError, 2.2)),
++           "--smoke-chance", "0.2", "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+   })
+ }
+diff --git c/designs/Frame.qml w/designs/Frame.qml
+index bde9407..ff5194b 100644
+--- c/designs/Frame.qml
++++ w/designs/Frame.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -8,8 +9,8 @@ DesignBase {
+   readonly property int inset: 56
+   readonly property int captionHeight: 150
+ 
+-  Rectangle { anchors.fill: parent; color: Color.background }
+-  Rectangle { anchors.fill: parent; color: Color.lock.background }
++  Rectangle { anchors.fill: parent; color: Commons.Color.background }
++  Rectangle { anchors.fill: parent; color: Commons.Color.lock.background }
+ 
+   Item {
+     id: photo
+@@ -47,14 +48,14 @@ DesignBase {
+       spacing: 4
+       Text {
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 4)
+         font.weight: Font.DemiBold
+       }
+       Text {
+         text: Qt.formatDate(lock.now, "dddd d MMMM yyyy")
+-        color: lock.withAlpha(Color.lock.text, 0.65)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.65)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.subtitle
+         font.letterSpacing: 1
+@@ -69,7 +70,7 @@ DesignBase {
+       height: 52
+       radius: 6
+       outlineThickness: 1
+-      color: lock.withAlpha(Color.background, 0.5)
++      color: lock.withAlpha(Commons.Color.background, 0.5)
+       placeholder: "Password"
+     }
+ 
+@@ -80,7 +81,7 @@ DesignBase {
+       Text {
+         anchors.right: parent.right
+         text: lock.userName
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+         font.weight: Font.DemiBold
+@@ -89,7 +90,7 @@ DesignBase {
+         anchors.right: parent.right
+         text: lock.errorState ? lock.failureMessage : (lock.authenticatingPassword ? "Checking…" : lock.hostName)
+         textFormat: Text.PlainText
+-        color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.65)
++        color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.65)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.subtitle
+       }
+diff --git c/designs/Horizon.qml w/designs/Horizon.qml
+index 49b3811..d1b543a 100644
+--- c/designs/Horizon.qml
++++ w/designs/Horizon.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Event horizon: the clock's cells scatter as stars, get pulled into a black
+@@ -9,7 +10,7 @@ DesignBase {
+   inputItem: field.input
+   flashOnFail: false
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 2.2) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 2.2) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -30,9 +31,9 @@ DesignBase {
+     columns: textColumns + 30
+     rows: textRows + 14
+     effectOptions: ({
+-      blackhole: ["--blackhole-color", Ttfx.hex(Color.lock.borderActive),
+-                  "--star-colors", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.muted),
+-                  "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++      blackhole: ["--blackhole-color", Ttfx.hex(Commons.Color.lock.borderActive),
++                  "--star-colors", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.muted),
++                  "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -45,7 +46,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("dddd d MMMM").toLowerCase()
+-      color: lock.withAlpha(Color.lock.text, 0.5)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.letterSpacing: 3
+@@ -60,7 +61,7 @@ DesignBase {
+       radius: 23
+       outlineThickness: 1
+       showLockGlyph: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+     }
+   }
+ 
+diff --git c/designs/IconLock.qml w/designs/IconLock.qml
+index 77fc3bf..5a18603 100644
+--- c/designs/IconLock.qml
++++ w/designs/IconLock.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Shared layout for the logo designs: the square Omarchy logo animated by
+@@ -38,7 +39,7 @@ DesignBase {
+   Rectangle {
+     anchors.fill: parent
+     visible: !lock.wallpaper
+-    color: lock.deepen(Color.background, lock.backgroundDarkness)
++    color: lock.deepen(Commons.Color.background, lock.backgroundDarkness)
+   }
+ 
+   Wallpaper {
+@@ -92,7 +93,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm") + "   " + lock.clock("ddd d MMM")
+-      color: lock.withAlpha(Color.lock.text, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 2
+@@ -107,7 +108,7 @@ DesignBase {
+       radius: 24
+       outlineThickness: 1
+       showLockGlyph: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+       placeholder: lock.placeholder
+     }
+   }
+diff --git c/designs/Island.qml w/designs/Island.qml
+index f816a59..e37dbce 100644
+--- c/designs/Island.qml
++++ w/designs/Island.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -23,9 +24,9 @@ DesignBase {
+     width: row.implicitWidth + 32
+     height: 64
+     radius: 32
+-    color: lock.withAlpha(Color.lock.background, 0.92)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.92)
+     border.width: 1
+-    border.color: lock.withAlpha(Color.lock.text, 0.14)
++    border.color: lock.withAlpha(Commons.Color.lock.text, 0.14)
+     layer.enabled: true
+     layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Qt.rgba(0, 0, 0, 0.5); shadowBlur: 1.0; shadowVerticalOffset: 8 }
+ 
+@@ -54,15 +55,15 @@ DesignBase {
+         shakeOnFail: false
+         textAlignment: TextInput.AlignLeft
+         placeholder: lock.greeting() + ", " + lock.userName
+-        color: lock.withAlpha(Color.background, 0.5)
++        color: lock.withAlpha(Commons.Color.background, 0.5)
+       }
+ 
+-      Rectangle { width: 1; height: 28; anchors.verticalCenter: parent.verticalCenter; color: lock.withAlpha(Color.lock.text, 0.2) }
++      Rectangle { width: 1; height: 28; anchors.verticalCenter: parent.verticalCenter; color: lock.withAlpha(Commons.Color.lock.text, 0.2) }
+ 
+       Text {
+         anchors.verticalCenter: parent.verticalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+         font.weight: Font.DemiBold
+@@ -77,7 +78,7 @@ DesignBase {
+     text: lock.errorState ? lock.failureMessage
+       : (lock.authenticatingPassword ? "Checking…" : Qt.formatDate(lock.now, "dddd d MMMM"))
+     textFormat: Text.PlainText
+-    color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.75)
++    color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.75)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.bodySmall
+     font.letterSpacing: 2
+@@ -90,7 +91,7 @@ DesignBase {
+     opacity: lock.snapshotMode ? 0 : 1
+     text: lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  Touch sensor or type password") : "󰌾  " + lock.hostName
+     textFormat: Text.PlainText
+-    color: lock.withAlpha(Color.lock.text, 0.5)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.5)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.bodySmall
+     font.letterSpacing: 2
+diff --git c/designs/Keycode.qml w/designs/Keycode.qml
+index 3d748ab..ce3d009 100644
+--- c/designs/Keycode.qml
++++ w/designs/Keycode.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A grid draws and dissolves into the Omarchy logo; under it the password is
+@@ -14,7 +15,7 @@ DesignBase {
+   readonly property int typed: passwordText.length
+   readonly property int slots: Math.min(24, Math.max(8, typed + 1))
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 2.1) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 2.1) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -41,11 +42,11 @@ DesignBase {
+       rows: textRows + 6
+       pixelSize: Math.max(8, Math.round(lock.height * 0.36 / Math.max(1, textRows) / 1.3))
+       effectOptions: ({
+-        synthgrid: ["--grid-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.muted),
+-                    "--text-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
++        synthgrid: ["--grid-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.muted),
++                    "--text-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
+                     "--max-active-blocks", "0.2"],
+-        unstable: ["--unstable-color", Ttfx.hex(Color.lock.textError),
+-                   "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++        unstable: ["--unstable-color", Ttfx.hex(Commons.Color.lock.textError),
++                   "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+       })
+     }
+ 
+@@ -78,10 +79,10 @@ DesignBase {
+             width: lock.cell
+             height: lock.cell
+             radius: Math.round(lock.cell * 0.14)
+-            color: filled ? Color.lock.borderActive : "transparent"
++            color: filled ? Commons.Color.lock.borderActive : "transparent"
+             border.width: filled ? 0 : 1
+-            border.color: lock.errorState ? Color.lock.textError
+-              : current ? Color.lock.text : lock.withAlpha(Color.lock.text, 0.22)
++            border.color: lock.errorState ? Commons.Color.lock.textError
++              : current ? Commons.Color.lock.text : lock.withAlpha(Commons.Color.lock.text, 0.22)
+             scale: filled ? 1 : 0.86
+             Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
+             Behavior on color { ColorAnimation { duration: 120 } }
+@@ -90,7 +91,7 @@ DesignBase {
+               anchors.centerIn: parent
+               visible: slot.filled && lock.passwordVisible && !lock.fido2Active
+               text: lock.passwordText.charAt(slot.index)
+-              color: Color.background
++              color: Commons.Color.background
+               font.family: Style.font.family
+               font.pixelSize: Math.round(lock.cell * 0.55)
+               font.weight: Font.Bold
+@@ -127,7 +128,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Ttfx.inputStatus(lock, lock.clock("dddd d MMMM").toLowerCase())
+-      color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.45)
++      color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.45)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.letterSpacing: 2
+diff --git c/designs/LockInput.qml w/designs/LockInput.qml
+index 6483ec4..1019ed8 100644
+--- c/designs/LockInput.qml
++++ w/designs/LockInput.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ TextInput {
+   id: input
+ 
+@@ -23,9 +24,9 @@ TextInput {
+   // plugged in there is nothing to protect the keystrokes from, and refusing
+   // them would leave the user with no way in.
+   readOnly: lock ? (lock.inputBlocked === true || lock.authenticatingPassword || (lock.fido2Active && lock.fido2Authenticating && !lock.fido2NeedsPin)) : true
+-  color: Color.lock.text
+-  selectionColor: Color.lock.selection
+-  selectedTextColor: Color.lock.text
++  color: Commons.Color.lock.text
++  selectionColor: Commons.Color.lock.selection
++  selectedTextColor: Commons.Color.lock.text
+   font.family: Style.font.family
+   font.pixelSize: Style.font.heading
+ 
+diff --git c/designs/Login.qml w/designs/Login.qml
+index a745df5..0160f4e 100644
+--- c/designs/Login.qml
++++ w/designs/Login.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The Omarchy logo decrypts on the left; on the right a terminal prompt takes
+@@ -12,7 +13,7 @@ DesignBase {
+ 
+   readonly property int fs: Math.max(16, Math.round(height / 40))
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 1.9) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 1.9) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -26,7 +27,7 @@ DesignBase {
+   LockInput { id: input; lock: lock; width: 1; height: 1; opacity: 0 }
+ 
+   component Line: Text {
+-    color: Color.lock.text
++    color: Commons.Color.lock.text
+     font.family: Style.font.family
+     font.pixelSize: lock.fs
+     textFormat: Text.PlainText
+@@ -47,10 +48,10 @@ DesignBase {
+       margin: 2
+       pixelSize: Math.max(8, Math.round(lock.height * 0.42 / Math.max(1, textRows) / 1.3))
+       effectOptions: ({
+-        decrypt: ["--typing-speed", "40", "--ciphertext-colors", Ttfx.hex(Color.muted), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
+-                  "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
+-        errorcorrect: ["--error-pairs", "0.05", "--error-color", Ttfx.hex(Color.lock.textError), "--correct-color", Ttfx.hex(Color.lock.borderActive),
+-                       "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++        decrypt: ["--typing-speed", "40", "--ciphertext-colors", Ttfx.hex(Commons.Color.muted), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
++                  "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
++        errorcorrect: ["--error-pairs", "0.05", "--error-color", Ttfx.hex(Commons.Color.lock.textError), "--correct-color", Ttfx.hex(Commons.Color.lock.borderActive),
++                       "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+       })
+     }
+ 
+@@ -58,7 +59,7 @@ DesignBase {
+       anchors.verticalCenter: parent.verticalCenter
+       width: 1
+       height: art.height * 0.7
+-      color: lock.withAlpha(Color.lock.text, 0.15)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.15)
+     }
+ 
+     Column {
+@@ -66,21 +67,21 @@ DesignBase {
+       width: lock.fs * 24
+       spacing: Math.round(lock.fs * 0.45)
+ 
+-      Line { text: "Omarchy"; color: Color.lock.borderActive; font.weight: Font.Bold; font.pixelSize: Math.round(lock.fs * 1.6) }
+-      Line { text: "session locked · " + lock.clock("ddd d MMM HH:mm").toLowerCase(); color: lock.withAlpha(Color.lock.text, 0.5) }
++      Line { text: "Omarchy"; color: Commons.Color.lock.borderActive; font.weight: Font.Bold; font.pixelSize: Math.round(lock.fs * 1.6) }
++      Line { text: "session locked · " + lock.clock("ddd d MMM HH:mm").toLowerCase(); color: lock.withAlpha(Commons.Color.lock.text, 0.5) }
+       Item { width: 1; height: lock.fs }
+ 
+       Row {
+         spacing: 0
+-        Line { text: "password "; color: lock.withAlpha(Color.lock.text, 0.55) }
+-        Line { text: "❯ "; color: lock.errorState ? Color.lock.textError : Color.lock.borderActive; font.weight: Font.Bold }
++        Line { text: "password "; color: lock.withAlpha(Commons.Color.lock.text, 0.55) }
++        Line { text: "❯ "; color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.borderActive; font.weight: Font.Bold }
+         Line { text: Ttfx.masked(lock, "•", 22) }
+         Rectangle {
+           id: cursor
+           anchors.verticalCenter: parent.verticalCenter
+           width: Math.round(lock.fs * 0.6)
+           height: Math.round(lock.fs * 1.15)
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           visible: lock.inputEnabled && !lock.authenticatingPassword
+           SequentialAnimation on opacity {
+             loops: Animation.Infinite
+@@ -98,13 +99,13 @@ DesignBase {
+       Line {
+         readonly property string status: Ttfx.inputStatus(lock, "")
+         text: status.length > 0 ? (lock.errorState ? "✗ " : "… ") + status : " "
+-        color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.6)
++        color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.6)
+       }
+ 
+       Line {
+         text: lock.fingerprintHint("enter unlocks · esc clears" + (lock.fingerprintConfigured ? " · or touch the reader" : "")).toLowerCase()
+           + (lock.fido2Configured ? " · tab for your key" : "")
+-        color: lock.withAlpha(Color.lock.text, 0.3)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.3)
+         font.pixelSize: Math.round(lock.fs * 0.8)
+       }
+     }
+diff --git c/designs/Mainframe.qml w/designs/Mainframe.qml
+index f662db1..bf53bd1 100644
+--- c/designs/Mainframe.qml
++++ w/designs/Mainframe.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The Omarchy logo types itself out in ciphertext and decrypts. A wrong
+@@ -12,9 +13,9 @@ IconLock {
+   backgroundDarkness: 2.3
+   placeholder: "passphrase"
+   effectOptions: ({
+-    decrypt: ["--typing-speed", "40", "--ciphertext-colors", Ttfx.hex(Color.muted), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
+-              "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
+-    errorcorrect: ["--error-pairs", "0.05", "--error-color", Ttfx.hex(Color.lock.textError), "--correct-color", Ttfx.hex(Color.lock.borderActive),
+-                   "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++    decrypt: ["--typing-speed", "40", "--ciphertext-colors", Ttfx.hex(Commons.Color.muted), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
++              "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
++    errorcorrect: ["--error-pairs", "0.05", "--error-color", Ttfx.hex(Commons.Color.lock.textError), "--correct-color", Ttfx.hex(Commons.Color.lock.borderActive),
++                   "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+   })
+ }
+diff --git c/designs/Motion.qml w/designs/Motion.qml
+index efd3967..b54edce 100644
+--- c/designs/Motion.qml
++++ w/designs/Motion.qml
+@@ -3,6 +3,7 @@ import QtQuick.Effects
+ import qs.Commons
+ 
+ // Full bleed looping video with the clock over it. Without a video set it is
++import qs.Commons as Commons
+ // the wallpaper instead, so the design still stands on its own.
+ DesignBase {
+   id: lock
+@@ -32,7 +33,7 @@ DesignBase {
+     anchors.top: parent.top
+     anchors.margins: lock.margin
+     text: lock.greeting() + ", " + lock.userName
+-    color: lock.withAlpha(Color.lock.text, 0.8)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.8)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.subtitle
+     font.letterSpacing: 3
+@@ -45,7 +46,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 11)
+       font.weight: Font.Light
+@@ -57,7 +58,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd d MMMM").toUpperCase()
+-      color: lock.withAlpha(Color.lock.text, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.letterSpacing: 6
+@@ -79,7 +80,7 @@ DesignBase {
+       radius: height / 2
+       showLockGlyph: false
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.lock.background, 0.55)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.55)
+     }
+ 
+     Text {
+@@ -87,7 +88,7 @@ DesignBase {
+       text: lock.failedAttempts > 0
+         ? lock.failedAttempts + " failed " + (lock.failedAttempts === 1 ? "attempt" : "attempts")
+         : (lock.hasVideo ? "" : "No video yet  ·  omarchy-shell lock pickVideo")
+-      color: lock.failedAttempts > 0 ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++      color: lock.failedAttempts > 0 ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.bodySmall
+       font.letterSpacing: 1
+diff --git c/designs/Music.qml w/designs/Music.qml
+index d2533ab..565af65 100644
+--- c/designs/Music.qml
++++ w/designs/Music.qml
+@@ -3,6 +3,7 @@ import QtQuick.Effects
+ import Quickshell.Services.Mpris
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -62,7 +63,7 @@ DesignBase {
+     anchors.left: parent.left
+     anchors.margins: 56
+     text: lock.clock("HH:mm")
+-    color: Color.lock.text
++    color: Commons.Color.lock.text
+     font.family: Style.font.family
+     font.pixelSize: Math.round(Style.font.baseSize * 4)
+     font.weight: Font.DemiBold
+@@ -72,7 +73,7 @@ DesignBase {
+     anchors.right: parent.right
+     anchors.margins: 56
+     text: Qt.formatDate(lock.now, "dddd d MMMM")
+-    color: lock.withAlpha(Color.lock.text, 0.7)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.title
+     font.letterSpacing: 2
+@@ -87,9 +88,9 @@ DesignBase {
+       width: nowPlaying.implicitWidth + 60
+       height: nowPlaying.implicitHeight + 48
+       radius: 22
+-      color: lock.withAlpha(Color.lock.background, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.7)
+       border.width: 1
+-      border.color: lock.withAlpha(Color.lock.text, 0.12)
++      border.color: lock.withAlpha(Commons.Color.lock.text, 0.12)
+       layer.enabled: true
+       layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Qt.rgba(0, 0, 0, 0.5); shadowBlur: 1.0; shadowVerticalOffset: 10 }
+ 
+@@ -100,7 +101,7 @@ DesignBase {
+ 
+         Rectangle {
+           width: 150; height: 150; radius: 14
+-          color: lock.withAlpha(Color.lock.text, 0.08)
++          color: lock.withAlpha(Commons.Color.lock.text, 0.08)
+           clip: true
+           anchors.verticalCenter: parent.verticalCenter
+           Image {
+@@ -114,7 +115,7 @@ DesignBase {
+             anchors.centerIn: parent
+             visible: !(lock.hasMedia && lock.artUrl.length > 0)
+             text: "󰎆"
+-            color: lock.withAlpha(Color.lock.text, 0.4)
++            color: lock.withAlpha(Commons.Color.lock.text, 0.4)
+             font.family: Style.font.family
+             font.pixelSize: Math.round(Style.font.baseSize * 4)
+           }
+@@ -126,7 +127,7 @@ DesignBase {
+           width: 380
+           Text {
+             text: lock.hasMedia ? (lock.playing ? "󰐊  NOW PLAYING" : "󰏤  PAUSED") : "󰝛  NOTHING PLAYING"
+-            color: Color.lock.borderActive
++            color: Commons.Color.lock.borderActive
+             font.family: Style.font.family
+             font.pixelSize: Style.font.caption
+             font.letterSpacing: 3
+@@ -135,7 +136,7 @@ DesignBase {
+             width: parent.width
+             text: lock.hasMedia ? lock.title : lock.greeting() + ", " + lock.userName
+             textFormat: Text.PlainText
+-            color: Color.lock.text
++            color: Commons.Color.lock.text
+             font.family: Style.font.family
+             font.pixelSize: Style.font.display
+             font.weight: Font.DemiBold
+@@ -147,7 +148,7 @@ DesignBase {
+             width: parent.width
+             text: lock.hasMedia ? lock.artist + (lock.album ? "  ·  " + lock.album : "") : "Start something and it shows up here"
+             textFormat: Text.PlainText
+-            color: lock.withAlpha(Color.lock.text, 0.7)
++            color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+             font.family: Style.font.family
+             font.pixelSize: Style.font.subtitle
+             elide: Text.ElideRight
+@@ -156,7 +157,7 @@ DesignBase {
+             visible: lock.hasMedia && lock.identity.length > 0
+             text: lock.identity
+             textFormat: Text.PlainText
+-            color: lock.withAlpha(Color.lock.text, 0.45)
++            color: lock.withAlpha(Commons.Color.lock.text, 0.45)
+             font.family: Style.font.family
+             font.pixelSize: Style.font.caption
+           }
+@@ -172,7 +173,7 @@ DesignBase {
+       height: 54
+       radius: 27
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.lock.background, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.7)
+     }
+   }
+ }
+diff --git c/designs/Neon.qml w/designs/Neon.qml
+index 49c2122..bf80ed7 100644
+--- c/designs/Neon.qml
++++ w/designs/Neon.qml
+@@ -2,13 +2,14 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+ 
+-  readonly property color glow: errorState ? Color.lock.textError : Color.lock.borderActive
++  readonly property color glow: errorState ? Commons.Color.lock.textError : Commons.Color.lock.borderActive
+ 
+-  Rectangle { anchors.fill: parent; color: Qt.darker(Color.background, 1.35) }
++  Rectangle { anchors.fill: parent; color: Qt.darker(Commons.Color.background, 1.35) }
+ 
+   Canvas {
+     anchors.fill: parent
+@@ -54,7 +55,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.borderActive
++      color: Commons.Color.lock.borderActive
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 11)
+       font.weight: Font.Bold
+@@ -62,7 +63,7 @@ DesignBase {
+       layer.enabled: true
+       layer.effect: MultiEffect {
+         shadowEnabled: true
+-        shadowColor: Color.lock.borderActive
++        shadowColor: Commons.Color.lock.borderActive
+         shadowBlur: 1.0
+         shadowScale: 1.04
+         shadowOpacity: 0.9
+@@ -72,12 +73,12 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd  ·  d MMMM").toUpperCase()
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 6
+       layer.enabled: true
+-      layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Color.lock.text; shadowBlur: 0.6; shadowOpacity: 0.5 }
++      layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Commons.Color.lock.text; shadowBlur: 0.6; shadowOpacity: 0.5 }
+     }
+ 
+     Item {
+@@ -105,7 +106,7 @@ DesignBase {
+     anchors.horizontalCenter: parent.horizontalCenter
+     text: lock.fingerprintConfigured ? lock.fingerprintHint("TOUCH SENSOR OR TYPE PASSWORD").toUpperCase() : "TYPE PASSWORD  ·  ENTER TO UNLOCK"
+     textFormat: Text.PlainText
+-    color: lock.withAlpha(Color.lock.text, 0.45)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.45)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.caption
+     font.letterSpacing: 4
+diff --git c/designs/Orbit.qml w/designs/Orbit.qml
+index d8efaeb..d17aeb6 100644
+--- c/designs/Orbit.qml
++++ w/designs/Orbit.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Four launchers circle the screen edge and fire the clock together from the
+@@ -34,10 +35,10 @@ DesignBase {
+       orbittingvolley: ["--launch-delay", "20", "--volley-size", "0.05",
+                         "--top-launcher-symbol", "●", "--right-launcher-symbol", "●",
+                         "--bottom-launcher-symbol", "●", "--left-launcher-symbol", "●",
+-                        "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
++                        "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
+       rings: ["--spin-duration", "60", "--disperse-duration", "40", "--spin-disperse-cycles", "1",
+-              "--ring-colors", Ttfx.hex(Color.lock.textError), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
+-              "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++              "--ring-colors", Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
++              "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -52,7 +53,7 @@ DesignBase {
+     radius: 25
+     outlineThickness: 1
+     showLockGlyph: false
+-    color: lock.withAlpha(Color.lock.background, 0.55)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.55)
+   }
+ 
+   Connections {
+diff --git c/designs/Panel.qml w/designs/Panel.qml
+index 329a22e..8c95544 100644
+--- c/designs/Panel.qml
++++ w/designs/Panel.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Half the screen in the theme accent with the Omarchy logo poured into it in
+@@ -14,9 +15,9 @@ DesignBase {
+   // Stroke and block sizes follow the logo's cells so the field matches it.
+   readonly property int stroke: Math.max(4, Math.round(art.cellWidth * 0.9))
+   readonly property int block: Math.max(12, Math.round(height / 54))
+-  readonly property string bgHex: Ttfx.hex(Color.background)
++  readonly property string bgHex: Ttfx.hex(Commons.Color.background)
+ 
+-  Rectangle { anchors.fill: parent; color: Color.background }
++  Rectangle { anchors.fill: parent; color: Commons.Color.background }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -33,7 +34,7 @@ DesignBase {
+     anchors.top: parent.top
+     anchors.bottom: parent.bottom
+     width: Math.round(lock.width * 0.46)
+-    color: Color.lock.borderActive
++    color: Commons.Color.lock.borderActive
+ 
+     TtfxText {
+       id: art
+@@ -43,13 +44,13 @@ DesignBase {
+       replayEffect: "pour"
+       margin: 4
+       pixelSize: Math.max(8, Math.round(lock.height * 0.44 / Math.max(1, textRows) / 1.3))
+-      textColor: Color.background
+-      backgroundColor: Color.lock.borderActive
++      textColor: Commons.Color.background
++      backgroundColor: Commons.Color.lock.borderActive
+       effectOptions: ({
+         pour: ["--pour-direction", "down", "--movement-speed-range", "0.6-1.0",
+-               "--starting-color", Ttfx.hex(Qt.lighter(Color.lock.borderActive, 1.35)),
++               "--starting-color", Ttfx.hex(Qt.lighter(Commons.Color.lock.borderActive, 1.35)),
+                "--final-gradient-stops", lock.bgHex, lock.bgHex],
+-        unstable: ["--unstable-color", Ttfx.hex(Color.lock.textError), "--final-gradient-stops", lock.bgHex, lock.bgHex]
++        unstable: ["--unstable-color", Ttfx.hex(Commons.Color.lock.textError), "--final-gradient-stops", lock.bgHex, lock.bgHex]
+       })
+     }
+   }
+@@ -74,13 +75,13 @@ DesignBase {
+           anchors.verticalCenter: parent.verticalCenter
+           width: lock.stroke * 2
+           height: width
+-          color: lock.errorState ? Color.lock.textError : Color.lock.borderActive
++          color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.borderActive
+         }
+         Text {
+           anchors.verticalCenter: parent.verticalCenter
+           readonly property string status: Ttfx.inputStatus(lock, "")
+           text: (status.length > 0 ? status : "locked · " + lock.clock("HH:mm · ddd d MMM")).toLowerCase()
+-          color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++          color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+           font.family: Style.font.family
+           font.pixelSize: Style.font.title
+           font.letterSpacing: 1
+@@ -94,7 +95,7 @@ DesignBase {
+         height: lock.block * 2 + lock.stroke * 2
+         color: "transparent"
+         border.width: lock.stroke
+-        border.color: lock.errorState ? Color.lock.textError : Color.lock.borderActive
++        border.color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.borderActive
+         Behavior on border.color { ColorAnimation { duration: 150 } }
+ 
+         readonly property int fits: Math.max(1, Math.floor((width - lock.block * 2 - eye.width) / (lock.block * 1.5)) - 1)
+@@ -112,7 +113,7 @@ DesignBase {
+             Rectangle {
+               width: lock.block
+               height: lock.block
+-              color: Color.lock.text
++              color: Commons.Color.lock.text
+               scale: 0.4
+               Component.onCompleted: scale = 1
+               Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack } }
+@@ -126,7 +127,7 @@ DesignBase {
+             height: lock.block
+             color: "transparent"
+             border.width: Math.max(2, Math.round(lock.stroke / 2))
+-            border.color: Color.lock.borderActive
++            border.color: Commons.Color.lock.borderActive
+             visible: lock.inputEnabled && !lock.authenticatingPassword
+             SequentialAnimation on opacity {
+               loops: Animation.Infinite
+@@ -146,7 +147,7 @@ DesignBase {
+           anchors.verticalCenter: parent.verticalCenter
+           visible: lock.passwordVisible && !lock.fido2Active
+           text: lock.passwordText
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           elide: Text.ElideLeft
+           font.family: Style.font.family
+           font.pixelSize: Math.round(lock.block * 1.4)
+@@ -159,7 +160,7 @@ DesignBase {
+           anchors.verticalCenter: parent.verticalCenter
+           visible: lock.passwordText.length === 0 && !lock.authenticatingPassword
+           text: lock.fido2Active ? "touch your key" : "password"
+-          color: lock.withAlpha(Color.lock.text, 0.3)
++          color: lock.withAlpha(Commons.Color.lock.text, 0.3)
+           font.family: Style.font.family
+           font.pixelSize: Math.round(lock.block * 1.1)
+         }
+@@ -186,7 +187,7 @@ DesignBase {
+           + (lock.fingerprintConfigured ? " · or touch the reader" : "")
+           + (lock.fido2Configured ? " · tab for your key" : "")).toLowerCase()
+         textFormat: Text.PlainText
+-        color: lock.withAlpha(Color.lock.text, 0.28)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.28)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.body
+         font.letterSpacing: 1
+diff --git c/designs/PasswordField.qml w/designs/PasswordField.qml
+index 8ede66c..81ea1f3 100644
+--- c/designs/PasswordField.qml
++++ w/designs/PasswordField.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import qs.Ui
+ 
+ BorderSurface {
+@@ -59,12 +60,12 @@ BorderSurface {
+ 
+   width: 400
+   height: 60
+-  color: Color.lock.background
++  color: Commons.Color.lock.background
+   radius: Math.max(Style.cornerRadius, 12)
+   clip: true
+   borderSpec: errorState
+-    ? Border.surfaceSpec("lock", "border-error", Color.lock.borderError, field.outlineThickness, "border-alpha")
+-    : Border.surfaceSpec("lock", "border-active", Color.lock.borderActive, field.outlineThickness, "border-alpha")
++    ? Border.surfaceSpec("lock", "border-error", Commons.Color.lock.borderError, field.outlineThickness, "border-alpha")
++    : Border.surfaceSpec("lock", "border-active", Commons.Color.lock.borderActive, field.outlineThickness, "border-alpha")
+ 
+   function focusInput() { input.forceActiveFocus() }
+ 
+@@ -100,7 +101,7 @@ BorderSurface {
+     anchors.verticalCenter: parent.verticalCenter
+     visible: field.showLockGlyph
+     text: field.authenticating ? "󰔟" : (field.errorState ? "󰍁" : "󰌾")
+-    color: field.errorState ? Color.lock.textError : Color.lock.placeholder
++    color: field.errorState ? Commons.Color.lock.textError : Commons.Color.lock.placeholder
+     font.family: Style.font.family
+     font.pixelSize: Math.round(field.fieldFontSize * 1.1)
+   }
+@@ -116,14 +117,14 @@ BorderSurface {
+     radius: 3
+     color: "transparent"
+     border.width: 1
+-    border.color: Color.lock.placeholder
++    border.color: Commons.Color.lock.placeholder
+ 
+     Text {
+       id: layoutCode
+       anchors.centerIn: parent
+       text: field.lock ? field.lock.keyboardLayout : ""
+       textFormat: Text.PlainText
+-      color: Color.lock.placeholder
++      color: Commons.Color.lock.placeholder
+       font.family: Style.font.family
+       font.pixelSize: Math.round(field.fieldFontSize * 0.62)
+       font.letterSpacing: 1
+@@ -144,14 +145,14 @@ BorderSurface {
+     radius: 3
+     color: "transparent"
+     border.width: 1
+-    border.color: Color.lock.borderActive
++    border.color: Commons.Color.lock.borderActive
+ 
+     Text {
+       id: capsLabel
+       anchors.centerIn: parent
+       text: "CAPS"
+       textFormat: Text.PlainText
+-      color: Color.lock.borderActive
++      color: Commons.Color.lock.borderActive
+       font.family: Style.font.family
+       font.pixelSize: Math.round(field.fieldFontSize * 0.62)
+       font.letterSpacing: 1
+@@ -182,7 +183,7 @@ BorderSurface {
+     cursorVisible: activeFocus && text.length > 0 && !field.authenticating && !field.errorState
+     cursorDelegate: Rectangle {
+       width: 2
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       visible: input.cursorVisible
+     }
+   }
+@@ -194,7 +195,7 @@ BorderSurface {
+       : (field.fido2Active ? (field.lock.fido2Status.length > 0 ? field.lock.fido2Status : "Waiting for your key…") : field.placeholder))
+     textFormat: Text.PlainText
+     visible: input.text.length === 0 && !field.snapshotBox
+-    color: field.authenticating ? Color.lock.text : (field.errorState ? Color.lock.textError : Color.lock.placeholder)
++    color: field.authenticating ? Commons.Color.lock.text : (field.errorState ? Commons.Color.lock.textError : Commons.Color.lock.placeholder)
+     font.family: Style.font.family
+     font.pixelSize: field.fieldFontSize
+     font.italic: !field.authenticating && field.errorState
+@@ -216,7 +217,7 @@ BorderSurface {
+     Text {
+       anchors.centerIn: parent
+       text: field.revealed ? "󰈉" : "󰈈"
+-      color: field.revealed ? Color.lock.borderActive : Color.lock.placeholder
++      color: field.revealed ? Commons.Color.lock.borderActive : Commons.Color.lock.placeholder
+       font.family: Style.font.family
+       font.pixelSize: Math.round(field.fieldFontSize * 1.1)
+     }
+@@ -242,7 +243,7 @@ BorderSurface {
+     anchors.verticalCenter: parent.verticalCenter
+     visible: field.fingerprint
+     text: "󰈷"
+-    color: Color.lock.placeholder
++    color: Commons.Color.lock.placeholder
+     font.family: Style.font.family
+     font.pixelSize: Math.round(field.fieldFontSize * 1.1)
+   }
+@@ -255,7 +256,7 @@ BorderSurface {
+     anchors.verticalCenter: parent.verticalCenter
+     visible: field.face
+     text: "󰱻"
+-    color: Color.lock.placeholder
++    color: Commons.Color.lock.placeholder
+     font.family: Style.font.family
+     font.pixelSize: Math.round(field.fieldFontSize * 1.1)
+   }
+@@ -269,7 +270,7 @@ BorderSurface {
+     anchors.verticalCenter: parent.verticalCenter
+     visible: field.fido2
+     text: ""
+-    color: field.fido2Active ? Color.lock.text : Color.lock.placeholder
++    color: field.fido2Active ? Commons.Color.lock.text : Commons.Color.lock.placeholder
+     font.family: Style.font.family
+     font.pixelSize: Math.round(field.fieldFontSize * 1.1)
+     MouseArea {
+diff --git c/designs/Pond.qml w/designs/Pond.qml
+index 62232d5..db7d341 100644
+--- c/designs/Pond.qml
++++ w/designs/Pond.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // Every keystroke drops into the water. Rings spread and fade, a wrong password
++import qs.Commons as Commons
+ // throws one big red wave, and the surface never sits completely still.
+ DesignBase {
+   id: lock
+@@ -17,7 +18,7 @@ DesignBase {
+     onClicked: function(mouse) {
+       lock.wakeRequested()
+       lock.forcePasswordFocus()
+-      lock.splash(mouse.x, mouse.y, 260, Color.lock.borderActive, 0.4)
++      lock.splash(mouse.x, mouse.y, 260, Commons.Color.lock.borderActive, 0.4)
+     }
+     onPositionChanged: lock.wakeRequested()
+   }
+@@ -69,7 +70,7 @@ DesignBase {
+   // not stack every ring in the same spot.
+   function keySplash() {
+     var point = field.mapToItem(lock, field.width * (0.12 + Math.random() * 0.76), field.height / 2)
+-    lock.splash(point.x, point.y, 200 + Math.random() * 140, Color.lock.borderActive, 0.55)
++    lock.splash(point.x, point.y, 200 + Math.random() * 140, Commons.Color.lock.borderActive, 0.55)
+   }
+ 
+   Typing {
+@@ -77,7 +78,7 @@ DesignBase {
+     onTyped: lock.keySplash()
+     onDeleted: {
+       var point = field.mapToItem(lock, field.width / 2, field.height / 2)
+-      lock.splash(point.x, point.y, 120, lock.withAlpha(Color.lock.text, 0.9), 0.3)
++      lock.splash(point.x, point.y, 120, lock.withAlpha(Commons.Color.lock.text, 0.9), 0.3)
+     }
+   }
+ 
+@@ -86,7 +87,7 @@ DesignBase {
+     function onFailureMessageChanged() {
+       if (lock.failureMessage.length === 0) return
+       var point = field.mapToItem(lock, field.width / 2, field.height / 2)
+-      lock.splash(point.x, point.y, Math.max(lock.width, lock.height) * 1.1, Color.lock.textError, 0.5)
++      lock.splash(point.x, point.y, Math.max(lock.width, lock.height) * 1.1, Commons.Color.lock.textError, 0.5)
+     }
+   }
+ 
+@@ -101,7 +102,7 @@ DesignBase {
+       lock.splash(lock.width * (0.1 + Math.random() * 0.8),
+                   lock.height * (0.1 + Math.random() * 0.8),
+                   160 + Math.random() * 220,
+-                  lock.withAlpha(Color.lock.text, 0.5), 0.18)
++                  lock.withAlpha(Commons.Color.lock.text, 0.5), 0.18)
+     }
+   }
+ 
+@@ -113,7 +114,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 9)
+       font.weight: Font.Light
+@@ -123,7 +124,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatDate(lock.now, "dddd d MMMM")
+-      color: lock.withAlpha(Color.lock.text, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 2
+@@ -142,6 +143,6 @@ DesignBase {
+     showLockGlyph: false
+     shakeOnFail: false
+     placeholder: "Password"
+-    color: lock.withAlpha(Color.lock.background, 0.6)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.6)
+   }
+ }
+diff --git c/designs/Poster.qml w/designs/Poster.qml
+index e8ec8d7..8e02ad9 100644
+--- c/designs/Poster.qml
++++ w/designs/Poster.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -31,7 +32,7 @@ DesignBase {
+       Text {
+         anchors.right: parent.right
+         text: lock.clock("HH")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: lock.bigSize
+         font.weight: Font.Black
+@@ -42,7 +43,7 @@ DesignBase {
+       Text {
+         anchors.right: parent.right
+         text: lock.clock("mm")
+-        color: Color.lock.borderActive
++        color: Commons.Color.lock.borderActive
+         font.family: Style.font.family
+         font.pixelSize: lock.bigSize
+         font.weight: Font.Black
+@@ -56,7 +57,7 @@ DesignBase {
+       anchors.right: parent.right
+       visible: lock.meridiem.length > 0
+       text: lock.meridiem
+-      color: Color.lock.borderActive
++      color: Commons.Color.lock.borderActive
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.letterSpacing: 6
+@@ -65,7 +66,7 @@ DesignBase {
+     Text {
+       anchors.right: parent.right
+       text: Qt.formatDate(lock.now, "dddd").toUpperCase()
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.letterSpacing: 6
+@@ -73,7 +74,7 @@ DesignBase {
+     Text {
+       anchors.right: parent.right
+       text: Qt.formatDate(lock.now, "d MMMM yyyy").toUpperCase()
+-      color: lock.withAlpha(Color.lock.text, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.body
+       font.letterSpacing: 4
+@@ -99,7 +100,7 @@ DesignBase {
+         anchors.verticalCenter: parent.verticalCenter
+         Text {
+           text: lock.userName
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Style.font.title
+           font.weight: Font.DemiBold
+@@ -107,7 +108,7 @@ DesignBase {
+         Text {
+           text: lock.errorState ? lock.failureMessage : (lock.authenticatingPassword ? "Checking…" : lock.hostName)
+           textFormat: Text.PlainText
+-          color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.6)
++          color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.6)
+           font.family: Style.font.family
+           font.pixelSize: Style.font.bodySmall
+         }
+@@ -121,7 +122,7 @@ DesignBase {
+       height: 52
+       textAlignment: TextInput.AlignLeft
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.lock.background, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.7)
+     }
+   }
+ }
+diff --git c/designs/Profile.qml w/designs/Profile.qml
+index 090a450..67f0c4d 100644
+--- c/designs/Profile.qml
++++ w/designs/Profile.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -19,7 +20,7 @@ DesignBase {
+     anchors.topMargin: 48
+     anchors.horizontalCenter: parent.horizontalCenter
+     text: lock.clock("HH:mm") + "   " + Qt.formatDate(lock.now, "ddd d MMM")
+-    color: lock.withAlpha(Color.lock.text, 0.7)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.title
+     font.letterSpacing: 2
+@@ -38,7 +39,7 @@ DesignBase {
+         radius: width / 2
+         color: "transparent"
+         border.width: 3
+-        border.color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.35)
++        border.color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.35)
+       }
+       Avatar {
+         anchors.centerIn: parent
+@@ -54,7 +55,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.userName
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Style.font.displayLarge
+         font.weight: Font.DemiBold
+@@ -63,7 +64,7 @@ DesignBase {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.errorState ? lock.failureMessage : (lock.authenticatingPassword ? "Checking…" : lock.hostName)
+         textFormat: Text.PlainText
+-        color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++        color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.subtitle
+       }
+@@ -78,7 +79,7 @@ DesignBase {
+       radius: 26
+       showLockGlyph: false
+       placeholder: "Password"
+-      color: lock.withAlpha(Color.lock.background, 0.6)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.6)
+     }
+   }
+ 
+@@ -89,7 +90,7 @@ DesignBase {
+     opacity: lock.snapshotMode ? 0 : 1
+     text: lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  Touch sensor or press Enter") : "Press Enter to unlock"
+     textFormat: Text.PlainText
+-    color: lock.withAlpha(Color.lock.text, 0.45)
++    color: lock.withAlpha(Commons.Color.lock.text, 0.45)
+     font.family: Style.font.family
+     font.pixelSize: Style.font.bodySmall
+     font.letterSpacing: 1
+diff --git c/designs/Rain.qml w/designs/Rain.qml
+index 74a7608..cc92258 100644
+--- c/designs/Rain.qml
++++ w/designs/Rain.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -9,7 +10,7 @@ DesignBase {
+   readonly property string glyphs: "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ABCDEFXYZ<>*+-="
+   property var drops: []
+ 
+-  Rectangle { anchors.fill: parent; color: Qt.darker(Color.background, 1.4) }
++  Rectangle { anchors.fill: parent; color: Qt.darker(Commons.Color.background, 1.4) }
+ 
+   Canvas {
+     id: canvas
+@@ -29,12 +30,12 @@ DesignBase {
+ 
+     onPaint: {
+       var ctx = getContext("2d")
+-      var bg = Qt.darker(Color.background, 1.4)
++      var bg = Qt.darker(Commons.Color.background, 1.4)
+       ctx.fillStyle = Qt.rgba(bg.r, bg.g, bg.b, 0.18)
+       ctx.fillRect(0, 0, width, height)
+       ctx.font = "bold " + (lock.cellSize - 4) + "px " + Style.font.family
+-      var accent = Color.lock.borderActive
+-      var head = Color.lock.text
++      var accent = Commons.Color.lock.borderActive
++      var head = Commons.Color.lock.text
+       var rows = height / lock.cellSize
+       var d = lock.drops
+       for (var i = 0; i < d.length; i++) {
+@@ -72,7 +73,7 @@ DesignBase {
+     radius: 6
+     color: Qt.rgba(0, 0, 0, 0.72)
+     border.width: 1
+-    border.color: lock.withAlpha(Color.lock.borderActive, 0.6)
++    border.color: lock.withAlpha(Commons.Color.lock.borderActive, 0.6)
+ 
+     Column {
+       id: box
+@@ -81,7 +82,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.clock("HH:mm:ss")
+-        color: Color.lock.borderActive
++        color: Commons.Color.lock.borderActive
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 6)
+         font.weight: Font.Bold
+@@ -90,7 +91,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: "wake up, " + lock.userName + "..."
+-        color: lock.withAlpha(Color.lock.text, 0.8)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.8)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.heading
+       }
+diff --git c/designs/Ring.qml w/designs/Ring.qml
+index dba5760..3b8c2b6 100644
+--- c/designs/Ring.qml
++++ w/designs/Ring.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: input
+@@ -10,7 +11,7 @@ DesignBase {
+   readonly property int ringWidth: 8
+   readonly property int maxSegments: 12
+   readonly property real progress: Math.min(passwordText.length, maxSegments) / maxSegments
+-  readonly property color ringColor: errorState ? Color.lock.textError : Color.lock.borderActive
++  readonly property color ringColor: errorState ? Commons.Color.lock.textError : Commons.Color.lock.borderActive
+ 
+   Wallpaper { anchors.fill: parent; lock: lock; blur: 0.9; dim: 0.15 }
+ 
+@@ -44,7 +45,7 @@ DesignBase {
+         var c = width / 2
+         var r = c - lock.ringWidth
+         ctx.lineWidth = lock.ringWidth
+-        ctx.strokeStyle = lock.withAlpha(Color.lock.text, 0.18)
++        ctx.strokeStyle = lock.withAlpha(Commons.Color.lock.text, 0.18)
+         ctx.beginPath()
+         ctx.arc(c, c, r, 0, Math.PI * 2)
+         ctx.stroke()
+@@ -85,7 +86,7 @@ DesignBase {
+         var r = c - lock.ringWidth
+         ctx.lineWidth = lock.ringWidth
+         ctx.lineCap = "round"
+-        ctx.strokeStyle = Color.lock.borderActive
++        ctx.strokeStyle = Commons.Color.lock.borderActive
+         ctx.beginPath()
+         ctx.arc(c, c, r, 0, Math.PI * 0.4)
+         ctx.stroke()
+@@ -103,7 +104,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 6)
+         font.weight: Font.DemiBold
+@@ -112,7 +113,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: Qt.formatDate(lock.now, "ddd d MMM").toUpperCase()
+-        color: lock.withAlpha(Color.lock.text, 0.65)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.65)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.bodySmall
+         font.letterSpacing: 4
+@@ -128,7 +129,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.userName
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+       font.weight: Font.DemiBold
+@@ -145,7 +146,7 @@ DesignBase {
+             ? (lock.passwordVisible ? lock.passwordText : lock.passwordText.length + " characters, Enter to unlock")
+             : (lock.fingerprintConfigured ? lock.fingerprintHint("Type your password or touch the sensor") : "Type your password")))
+         textFormat: Text.PlainText
+-        color: lock.errorState ? Color.lock.textError : (lock.passwordVisible && lock.passwordText.length > 0 ? Color.lock.text : lock.withAlpha(Color.lock.text, 0.55))
++        color: lock.errorState ? Commons.Color.lock.textError : (lock.passwordVisible && lock.passwordText.length > 0 ? Commons.Color.lock.text : lock.withAlpha(Commons.Color.lock.text, 0.55))
+         font.family: Style.font.family
+         font.pixelSize: lock.passwordVisible && lock.passwordText.length > 0 ? Style.font.heading : Style.font.body
+         font.italic: lock.errorState
+diff --git c/designs/Screensaver.qml w/designs/Screensaver.qml
+index 73931f1..1ccb35d 100644
+--- c/designs/Screensaver.qml
++++ w/designs/Screensaver.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import Quickshell
+ import Quickshell.Io
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The Omarchy screensaver as a lock screen: your branding logo from
+@@ -23,7 +24,7 @@ DesignBase {
+     }
+   }
+ 
+-  Rectangle { anchors.fill: parent; color: Color.background }
++  Rectangle { anchors.fill: parent; color: Commons.Color.background }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -78,7 +79,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 3)
+       font.weight: Font.DemiBold
+@@ -93,7 +94,7 @@ DesignBase {
+       radius: 6
+       outlineThickness: 1
+       showLockGlyph: false
+-      color: lock.withAlpha(Color.lock.background, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.background, 0.7)
+     }
+   }
+ }
+diff --git c/designs/Sheet.qml w/designs/Sheet.qml
+index 464af94..d01efd1 100644
+--- c/designs/Sheet.qml
++++ w/designs/Sheet.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -24,7 +25,7 @@ DesignBase {
+     spacing: 2
+     Text {
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 8)
+       font.weight: Font.DemiBold
+@@ -34,7 +35,7 @@ DesignBase {
+     }
+     Text {
+       text: Qt.formatDate(lock.now, "dddd, d MMMM")
+-      color: lock.withAlpha(Color.lock.text, 0.85)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.85)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.display
+       layer.enabled: true
+@@ -50,14 +51,14 @@ DesignBase {
+     anchors.bottomMargin: -32
+     height: lock.sheetHeight + 32
+     radius: 32
+-    color: lock.withAlpha(Color.lock.background, 0.94)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.94)
+ 
+     Rectangle {
+       anchors.top: parent.top
+       anchors.topMargin: 12
+       anchors.horizontalCenter: parent.horizontalCenter
+       width: 44; height: 5; radius: 3
+-      color: lock.withAlpha(Color.lock.text, 0.25)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.25)
+     }
+ 
+     Column {
+@@ -81,7 +82,7 @@ DesignBase {
+           spacing: 2
+           Text {
+             text: lock.greeting() + ", " + lock.userName
+-            color: Color.lock.text
++            color: Commons.Color.lock.text
+             font.family: Style.font.family
+             font.pixelSize: Style.font.display
+             font.weight: Font.DemiBold
+@@ -89,7 +90,7 @@ DesignBase {
+           Text {
+             text: lock.errorState ? lock.failureMessage : (lock.authenticatingPassword ? "Checking…" : "Enter your password to unlock")
+             textFormat: Text.PlainText
+-            color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.6)
++            color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.6)
+             font.family: Style.font.family
+             font.pixelSize: Style.font.subtitle
+           }
+@@ -103,7 +104,7 @@ DesignBase {
+         width: 440
+         height: 56
+         placeholder: "Password"
+-        color: lock.withAlpha(Color.background, 0.6)
++        color: lock.withAlpha(Commons.Color.background, 0.6)
+       }
+ 
+       Text {
+@@ -111,7 +112,7 @@ DesignBase {
+         opacity: lock.snapshotMode ? 0 : 1
+         text: lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  Touch sensor or press Enter") : "Press Enter to unlock  ·  Esc clears"
+         textFormat: Text.PlainText
+-        color: lock.withAlpha(Color.lock.text, 0.45)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.45)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.bodySmall
+         font.letterSpacing: 1
+diff --git c/designs/Sparks.qml w/designs/Sparks.qml
+index 5f778b5..2ecb370 100644
+--- c/designs/Sparks.qml
++++ w/designs/Sparks.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import qs.Commons
+ 
+ // The field throws embers. A handful per keystroke, more the faster you type,
++import qs.Commons as Commons
+ // a red shower on a wrong password. Plain items on a parabola rather than
+ // QtQuick.Particles, so it draws the same everywhere.
+ DesignBase {
+@@ -86,16 +87,16 @@ DesignBase {
+   Typing {
+     id: typing
+     lock: lock
+-    onTyped: lock.throwEmbers(8 + Math.min(12, Math.round(typing.cadence * 3)), Color.lock.borderActive, 230)
+-    onDeleted: lock.throwEmbers(3, lock.withAlpha(Color.lock.text, 0.8), 140)
+-    onCleared: lock.throwEmbers(26, Color.lock.borderActive, 300)
++    onTyped: lock.throwEmbers(8 + Math.min(12, Math.round(typing.cadence * 3)), Commons.Color.lock.borderActive, 230)
++    onDeleted: lock.throwEmbers(3, lock.withAlpha(Commons.Color.lock.text, 0.8), 140)
++    onCleared: lock.throwEmbers(26, Commons.Color.lock.borderActive, 300)
+   }
+ 
+   Connections {
+     target: lock
+     function onFailureMessageChanged() {
+       if (lock.failureMessage.length === 0) return
+-      lock.throwEmbers(60, Color.lock.textError, 380)
++      lock.throwEmbers(60, Commons.Color.lock.textError, 380)
+     }
+   }
+ 
+@@ -113,7 +114,7 @@ DesignBase {
+         gravity: -8,
+         span: 4000 + Math.random() * 2000,
+         spread: 4 + Math.random() * 3,
+-        color: lock.withAlpha(Color.lock.borderActive, 0.7)
++        color: lock.withAlpha(Commons.Color.lock.borderActive, 0.7)
+       })
+     }
+   }
+@@ -126,7 +127,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 10)
+       font.weight: Font.DemiBold
+@@ -136,7 +137,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.greeting() + ", " + lock.userName
+-      color: lock.withAlpha(Color.lock.text, 0.7)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 1
+@@ -155,6 +156,6 @@ DesignBase {
+     showLockGlyph: false
+     shakeOnFail: false
+     placeholder: "Password"
+-    color: lock.withAlpha(Color.lock.background, 0.6)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.6)
+   }
+ }
+diff --git c/designs/Split.qml w/designs/Split.qml
+index cc6a0f6..474a566 100644
+--- c/designs/Split.qml
++++ w/designs/Split.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -27,7 +28,7 @@ DesignBase {
+     spacing: 4
+     Text {
+       text: lock.clock("HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 8)
+       font.weight: Font.DemiBold
+@@ -37,7 +38,7 @@ DesignBase {
+     }
+     Text {
+       text: Qt.formatDate(lock.now, "dddd, d MMMM")
+-      color: lock.withAlpha(Color.lock.text, 0.85)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.85)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.display
+       layer.enabled: true
+@@ -59,8 +60,8 @@ DesignBase {
+       lock: lock
+       blur: 1.0; dim: 0.2; vignette: false
+     }
+-    Rectangle { anchors.fill: parent; color: lock.withAlpha(Color.lock.background, 0.55) }
+-    Rectangle { anchors.left: parent.left; width: 1; height: parent.height; color: lock.withAlpha(Color.lock.text, 0.14) }
++    Rectangle { anchors.fill: parent; color: lock.withAlpha(Commons.Color.lock.background, 0.55) }
++    Rectangle { anchors.left: parent.left; width: 1; height: parent.height; color: lock.withAlpha(Commons.Color.lock.text, 0.14) }
+ 
+     Column {
+       anchors.left: parent.left
+@@ -74,7 +75,7 @@ DesignBase {
+         width: 84
+         fontSize: Math.round(Style.font.baseSize * 3)
+         borderWidth: 3
+-        borderColor: lock.withAlpha(Color.lock.text, 0.25)
++        borderColor: lock.withAlpha(Commons.Color.lock.text, 0.25)
+         shadow: false
+       }
+ 
+@@ -82,14 +83,14 @@ DesignBase {
+         spacing: 4
+         Text {
+           text: lock.greeting()
+-          color: lock.withAlpha(Color.lock.text, 0.7)
++          color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+           font.family: Style.font.family
+           font.pixelSize: Style.font.title
+           font.letterSpacing: 2
+         }
+         Text {
+           text: lock.userName
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Style.font.displayLarge
+           font.weight: Font.DemiBold
+@@ -111,7 +112,7 @@ DesignBase {
+           ? lock.failedAttempts + " failed " + (lock.failedAttempts === 1 ? "attempt" : "attempts")
+           : (lock.fingerprintConfigured ? lock.fingerprintHint("󰆠  Touch the sensor or press Enter") : "Press Enter to unlock")
+         textFormat: Text.PlainText
+-        color: lock.failedAttempts > 0 ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++        color: lock.failedAttempts > 0 ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.bodySmall
+         font.letterSpacing: 1
+@@ -124,7 +125,7 @@ DesignBase {
+       anchors.margins: lock.margin
+       opacity: lock.snapshotMode ? 0 : 1
+       text: "󰌾  " + lock.hostName
+-      color: lock.withAlpha(Color.lock.text, 0.45)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.45)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.bodySmall
+       font.letterSpacing: 2
+diff --git c/designs/Spotlight.qml w/designs/Spotlight.qml
+index e9ea296..e95729b 100644
+--- c/designs/Spotlight.qml
++++ w/designs/Spotlight.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A dark stage: three spotlights sweep over the clock, meet in the middle and
+@@ -10,7 +11,7 @@ DesignBase {
+   shakeOnFail: true
+   flashOnFail: false
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 2.4) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 2.4) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -33,16 +34,16 @@ DesignBase {
+       pixelSize: Math.max(14, Math.round(lock.height / 30))
+       effectOptions: ({
+         spotlights: ["--search-duration", "200", "--spotlight-count", "3", "--beam-width-ratio", "2.5",
+-                     "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
++                     "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
+         searchlight: { effect: "spotlights", args: ["--search-duration", "60", "--spotlight-count", "1",
+-                     "--final-gradient-stops", Ttfx.hex(Color.lock.textError), Ttfx.hex(Color.lock.text)] }
++                     "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Commons.Color.lock.text)] }
+       })
+     }
+ 
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("dddd d MMMM")
+-      color: lock.withAlpha(Color.lock.text, 0.4)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.4)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 2
+diff --git c/designs/Statusline.qml w/designs/Statusline.qml
+index 44cd426..1feb48f 100644
+--- c/designs/Statusline.qml
++++ w/designs/Statusline.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // An editor waiting for a command: code rain resolves into the Omarchy logo,
+@@ -12,11 +13,11 @@ DesignBase {
+   flashOnFail: false
+ 
+   readonly property int fs: Math.max(15, Math.round(height / 44))
+-  readonly property color barColor: Qt.lighter(Color.background, 1.35)
+-  readonly property color modeColor: errorState ? Color.lock.textError
+-    : authenticatingPassword ? Color.lock.text : Color.lock.borderActive
++  readonly property color barColor: Qt.lighter(Commons.Color.background, 1.35)
++  readonly property color modeColor: errorState ? Commons.Color.lock.textError
++    : authenticatingPassword ? Commons.Color.lock.text : Commons.Color.lock.borderActive
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 1.5) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 1.5) }
+ 
+   MouseArea {
+     anchors.fill: parent
+@@ -30,7 +31,7 @@ DesignBase {
+   LockInput { id: input; lock: lock; width: 1; height: 1; opacity: 0 }
+ 
+   component Mono: Text {
+-    color: Color.lock.text
++    color: Commons.Color.lock.text
+     font.family: Style.font.family
+     font.pixelSize: lock.fs
+     textFormat: Text.PlainText
+@@ -54,11 +55,11 @@ DesignBase {
+     rows: Math.floor((lock.height - bottom.height) / Math.max(1, cellHeight))
+     effectOptions: ({
+       matrix: ["--rain-time", "2", "--resolve-delay", "1",
+-               "--highlight-color", Ttfx.hex(Color.lock.text),
+-               "--rain-color-gradient", Ttfx.hex(Color.muted), Ttfx.hex(Color.lock.borderActive),
+-               "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
+-      errorcorrect: ["--error-pairs", "0.05", "--error-color", Ttfx.hex(Color.lock.textError), "--correct-color", Ttfx.hex(Color.lock.borderActive),
+-                     "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++               "--highlight-color", Ttfx.hex(Commons.Color.lock.text),
++               "--rain-color-gradient", Ttfx.hex(Commons.Color.muted), Ttfx.hex(Commons.Color.lock.borderActive),
++               "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
++      errorcorrect: ["--error-pairs", "0.05", "--error-color", Ttfx.hex(Commons.Color.lock.textError), "--correct-color", Ttfx.hex(Commons.Color.lock.borderActive),
++                     "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+     })
+   }
+ 
+@@ -87,25 +88,25 @@ DesignBase {
+             id: mode
+             anchors.centerIn: parent
+             text: lock.errorState ? "DENIED" : lock.authenticatingPassword ? "CHECKING" : lock.fido2Active ? "KEY" : "LOCKED"
+-            color: Color.background
++            color: Commons.Color.background
+             font.weight: Font.Bold
+           }
+         }
+-        Mono { height: parent.height; text: "  omarchy  "; color: lock.withAlpha(Color.lock.text, 0.6) }
+-        Mono { height: parent.height; text: "[+]"; color: lock.withAlpha(Color.lock.text, 0.35); visible: lock.passwordText.length > 0 }
++        Mono { height: parent.height; text: "  omarchy  "; color: lock.withAlpha(Commons.Color.lock.text, 0.6) }
++        Mono { height: parent.height; text: "[+]"; color: lock.withAlpha(Commons.Color.lock.text, 0.35); visible: lock.passwordText.length > 0 }
+       }
+ 
+       Row {
+         anchors.right: parent.right
+         anchors.verticalCenter: parent.verticalCenter
+         height: parent.height
+-        Mono { height: parent.height; text: lock.clock("ddd d MMM").toLowerCase() + "  "; color: lock.withAlpha(Color.lock.text, 0.6) }
++        Mono { height: parent.height; text: lock.clock("ddd d MMM").toLowerCase() + "  "; color: lock.withAlpha(Commons.Color.lock.text, 0.6) }
+         Rectangle {
+           height: parent.height
+           width: clock.implicitWidth + lock.fs * 1.6
+           color: lock.modeColor
+           Behavior on color { ColorAnimation { duration: 150 } }
+-          Mono { id: clock; anchors.centerIn: parent; text: lock.clock("HH:mm"); color: Color.background; font.weight: Font.Bold }
++          Mono { id: clock; anchors.centerIn: parent; text: lock.clock("HH:mm"); color: Commons.Color.background; font.weight: Font.Bold }
+         }
+       }
+     }
+@@ -127,7 +128,7 @@ DesignBase {
+           anchors.verticalCenter: parent.verticalCenter
+           width: Math.round(lock.fs * 0.6)
+           height: Math.round(lock.fs * 1.2)
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           SequentialAnimation on opacity {
+             loops: Animation.Infinite
+             running: lock.visible
+@@ -145,7 +146,7 @@ DesignBase {
+         anchors.verticalCenter: parent.verticalCenter
+         visible: lock.errorState || lock.authenticatingPassword || lock.fido2Active
+         text: lock.errorState ? "E492: " + lock.failureMessage : "-- " + Ttfx.inputStatus(lock, "").toUpperCase() + " --"
+-        color: lock.errorState ? Color.lock.textError : Color.lock.text
++        color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.text
+         font.weight: lock.errorState ? Font.Normal : Font.Bold
+       }
+ 
+diff --git c/designs/Supernova.qml w/designs/Supernova.qml
+index eacf38a..1884297 100644
+--- c/designs/Supernova.qml
++++ w/designs/Supernova.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The cells of the Omarchy logo scatter as stars, fall into a black hole and
+@@ -13,11 +14,11 @@ IconLock {
+   padRows: 14
+   logoScale: 0.34
+   effectOptions: ({
+-    blackhole: ["--blackhole-color", Ttfx.hex(Color.lock.borderActive),
+-                "--star-colors", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.muted),
+-                "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
++    blackhole: ["--blackhole-color", Ttfx.hex(Commons.Color.lock.borderActive),
++                "--star-colors", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.muted),
++                "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
+     rings: ["--spin-duration", "80", "--disperse-duration", "50", "--spin-disperse-cycles", "1",
+-            "--ring-colors", Ttfx.hex(Color.lock.textError), Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
+-            "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)]
++            "--ring-colors", Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
++            "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)]
+   })
+ }
+diff --git c/designs/Synthwave.qml w/designs/Synthwave.qml
+index 083a59c..5ad54cd 100644
+--- c/designs/Synthwave.qml
++++ w/designs/Synthwave.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A wide ttfx synthgrid: grid lines draw across the screen and the blocks
+@@ -13,8 +14,8 @@ DesignBase {
+   Rectangle {
+     anchors.fill: parent
+     gradient: Gradient {
+-      GradientStop { position: 0; color: lock.deepen(Color.background, 1.8) }
+-      GradientStop { position: 1; color: lock.deepen(Color.background, 1.1) }
++      GradientStop { position: 0; color: lock.deepen(Commons.Color.background, 1.8) }
++      GradientStop { position: 1; color: lock.deepen(Commons.Color.background, 1.1) }
+     }
+   }
+ 
+@@ -37,8 +38,8 @@ DesignBase {
+     columns: Math.floor(lock.width * 0.8 / Math.max(1, cellWidth))
+     rows: Math.floor(lock.height * 0.55 / Math.max(1, cellHeight))
+     effectOptions: ({
+-      synthgrid: ["--grid-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.muted),
+-                  "--text-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text),
++      synthgrid: ["--grid-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.muted),
++                  "--text-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text),
+                   "--max-active-blocks", "0.2"]
+     })
+   }
+@@ -52,7 +53,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: lock.clock("dddd  ·  d MMMM")
+-      color: Color.lock.borderActive
++      color: Commons.Color.lock.borderActive
+       font.family: Style.font.family
+       font.pixelSize: Style.font.title
+       font.letterSpacing: 2
+@@ -68,7 +69,7 @@ DesignBase {
+       outlineThickness: 1
+       showLockGlyph: false
+       shakeOnFail: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+     }
+   }
+ 
+diff --git c/designs/System.qml w/designs/System.qml
+index 2a6edce..05ce726 100644
+--- c/designs/System.qml
++++ w/designs/System.qml
+@@ -3,6 +3,7 @@ import Quickshell.Io
+ import Quickshell.Services.UPower
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -84,9 +85,9 @@ DesignBase {
+     width: 200
+     height: 112
+     radius: 14
+-    color: lock.withAlpha(Color.lock.background, 0.7)
++    color: lock.withAlpha(Commons.Color.lock.background, 0.7)
+     border.width: 1
+-    border.color: lock.withAlpha(Color.lock.text, 0.1)
++    border.color: lock.withAlpha(Commons.Color.lock.text, 0.1)
+     Column {
+       anchors.left: parent.left
+       anchors.top: parent.top
+@@ -94,11 +95,11 @@ DesignBase {
+       spacing: 4
+       Row {
+         spacing: 8
+-        Text { text: icon; color: Color.lock.borderActive; font.family: Style.font.family; font.pixelSize: Style.font.title }
+-        Text { text: label.toUpperCase(); color: lock.withAlpha(Color.lock.text, 0.55); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.letterSpacing: 2; anchors.verticalCenter: parent.verticalCenter }
++        Text { text: icon; color: Commons.Color.lock.borderActive; font.family: Style.font.family; font.pixelSize: Style.font.title }
++        Text { text: label.toUpperCase(); color: lock.withAlpha(Commons.Color.lock.text, 0.55); font.family: Style.font.family; font.pixelSize: Style.font.caption; font.letterSpacing: 2; anchors.verticalCenter: parent.verticalCenter }
+       }
+-      Text { text: value; color: Color.lock.text; font.family: Style.font.family; font.pixelSize: Style.font.displayLarge; font.weight: Font.DemiBold }
+-      Text { text: sub; color: lock.withAlpha(Color.lock.text, 0.55); font.family: Style.font.family; font.pixelSize: Style.font.caption; visible: sub.length > 0 }
++      Text { text: value; color: Commons.Color.lock.text; font.family: Style.font.family; font.pixelSize: Style.font.displayLarge; font.weight: Font.DemiBold }
++      Text { text: sub; color: lock.withAlpha(Commons.Color.lock.text, 0.55); font.family: Style.font.family; font.pixelSize: Style.font.caption; visible: sub.length > 0 }
+     }
+     Rectangle {
+       visible: fill >= 0
+@@ -108,8 +109,8 @@ DesignBase {
+       anchors.margins: 12
+       height: 4
+       radius: 2
+-      color: lock.withAlpha(Color.lock.text, 0.15)
+-      Rectangle { width: parent.width * Math.max(0, Math.min(1, fill)); height: parent.height; radius: 2; color: Color.lock.borderActive }
++      color: lock.withAlpha(Commons.Color.lock.text, 0.15)
++      Rectangle { width: parent.width * Math.max(0, Math.min(1, fill)); height: parent.height; radius: 2; color: Commons.Color.lock.borderActive }
+     }
+   }
+ 
+@@ -123,7 +124,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 7)
+         font.weight: Font.DemiBold
+@@ -132,7 +133,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: Qt.formatDate(lock.now, "dddd, d MMMM") + "  ·  " + lock.userName + "@" + lock.hostName
+-        color: lock.withAlpha(Color.lock.text, 0.7)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.7)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.subtitle
+       }
+diff --git c/designs/Terminal.qml w/designs/Terminal.qml
+index f679f06..b84edca 100644
+--- c/designs/Terminal.qml
++++ w/designs/Terminal.qml
+@@ -1,6 +1,7 @@
+ import QtQuick
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: input
+@@ -8,11 +9,11 @@ DesignBase {
+ 
+   readonly property int fontSize: Math.round(Style.font.baseSize * 1.6)
+   readonly property int pad: Math.round(Math.min(width, height) * 0.08)
+-  readonly property color fg: Color.lock.text
+-  readonly property color dimFg: withAlpha(Color.lock.text, 0.55)
++  readonly property color fg: Commons.Color.lock.text
++  readonly property color dimFg: withAlpha(Commons.Color.lock.text, 0.55)
+   readonly property string masked: passwordVisible ? passwordText : "*".repeat(passwordText.length)
+ 
+-  Rectangle { anchors.fill: parent; color: Color.background }
++  Rectangle { anchors.fill: parent; color: Commons.Color.background }
+ 
+   Canvas {
+     anchors.fill: parent
+@@ -94,7 +95,7 @@ DesignBase {
+     Text {
+       visible: lock.errorState
+       text: "Login incorrect" + (lock.failedAttempts > 1 ? " (" + lock.failedAttempts + ")" : "")
+-      color: Color.lock.textError; font.family: Style.font.family; font.pixelSize: lock.fontSize
++      color: Commons.Color.lock.textError; font.family: Style.font.family; font.pixelSize: lock.fontSize
+     }
+     Text {
+       visible: lock.fingerprintConfigured
+diff --git c/designs/Tracking.qml w/designs/Tracking.qml
+index 1f36425..7d91daa 100644
+--- c/designs/Tracking.qml
++++ w/designs/Tracking.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // The Omarchy logo on a worn tape: it tracks in with noise and glitch lines,
+@@ -13,11 +14,11 @@ IconLock {
+   padColumns: 8
+   padRows: 4
+   effectOptions: ({
+-    vhstape: ["--total-glitch-time", "200", "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)],
++    vhstape: ["--total-glitch-time", "200", "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)],
+     blip: { effect: "vhstape", args: ["--total-glitch-time", "40", "--glitch-line-chance", "0.25",
+-            "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)] },
++            "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)] },
+     tear: { effect: "vhstape", args: ["--total-glitch-time", "90", "--glitch-line-chance", "0.4", "--noise-chance", "0.06",
+-            "--glitch-line-colors", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.textError), Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)),
+-            "--final-gradient-stops", Ttfx.hex(Color.lock.borderActive), Ttfx.hex(Color.lock.text)] }
++            "--glitch-line-colors", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)),
++            "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.borderActive), Ttfx.hex(Commons.Color.lock.text)] }
+   })
+ }
+diff --git c/designs/TtfxText.qml w/designs/TtfxText.qml
+index 1c0696c..657ab34 100644
+--- c/designs/TtfxText.qml
++++ w/designs/TtfxText.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import Quickshell
+ import Quickshell.Io
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // Plays a ttfx effect (Omarchy's terminal text effects, /usr/bin/ttfx) on a
+@@ -37,11 +38,11 @@ Item {
+ 
+   property int pixelSize: Style.font.body
+   property string fontFamily: Style.font.family
+-  property color textColor: Color.lock.text
+-  property color accentColor: Color.lock.borderActive
+-  property color mutedColor: Color.muted
+-  property color errorColor: Color.lock.textError
+-  property color backgroundColor: Color.background
++  property color textColor: Commons.Color.lock.text
++  property color accentColor: Commons.Color.lock.borderActive
++  property color mutedColor: Commons.Color.muted
++  property color errorColor: Commons.Color.lock.textError
++  property color backgroundColor: Commons.Color.background
+ 
+   // Plays an effect again whenever `text` changes: `replayEffect`, or `effect`
+   // when that is empty.
+diff --git c/designs/Vhs.qml w/designs/Vhs.qml
+index 904e481..a698fc6 100644
+--- c/designs/Vhs.qml
++++ w/designs/Vhs.qml
+@@ -1,5 +1,6 @@
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "Ttfx.js" as Ttfx
+ 
+ // A paused tape: VCR on-screen display around a clock that tracks badly.
+@@ -13,7 +14,7 @@ DesignBase {
+   readonly property int osdSize: Math.max(22, Math.round(lock.height / 26))
+   property bool rewinding: false
+ 
+-  Rectangle { anchors.fill: parent; color: lock.deepen(Color.background, 1.3) }
++  Rectangle { anchors.fill: parent; color: lock.deepen(Commons.Color.background, 1.3) }
+ 
+   Canvas {
+     anchors.fill: parent
+@@ -36,7 +37,7 @@ DesignBase {
+   }
+ 
+   component Osd: Text {
+-    color: Color.lock.text
++    color: Commons.Color.lock.text
+     font.family: Style.font.family
+     font.pixelSize: lock.osdSize
+     font.weight: Font.Bold
+@@ -95,12 +96,12 @@ DesignBase {
+       margin: 4
+       pixelSize: Math.max(14, Math.round(lock.height / 34))
+       effectOptions: ({
+-        vhstape: ["--total-glitch-time", "200", "--final-gradient-stops", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.text)],
++        vhstape: ["--total-glitch-time", "200", "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.text)],
+         blip: { effect: "vhstape", args: ["--total-glitch-time", "45", "--glitch-line-chance", "0.2",
+-                "--final-gradient-stops", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.text)] },
++                "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.text)] },
+         rewind: { effect: "vhstape", args: ["--total-glitch-time", "80", "--glitch-line-chance", "0.35", "--noise-chance", "0.05",
+-                  "--glitch-line-colors", Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)), Ttfx.hex(Color.lock.textError), Ttfx.hex(Qt.lighter(Color.lock.text, 1.25)),
+-                  "--final-gradient-stops", Ttfx.hex(Color.lock.text), Ttfx.hex(Color.lock.text)] }
++                  "--glitch-line-colors", Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)), Ttfx.hex(Commons.Color.lock.textError), Ttfx.hex(Qt.lighter(Commons.Color.lock.text, 1.25)),
++                  "--final-gradient-stops", Ttfx.hex(Commons.Color.lock.text), Ttfx.hex(Commons.Color.lock.text)] }
+       })
+       onFinished: lock.rewinding = false
+     }
+@@ -114,7 +115,7 @@ DesignBase {
+       radius: 0
+       outlineThickness: 2
+       showLockGlyph: false
+-      color: Color.lock.background
++      color: Commons.Color.lock.background
+       placeholder: "PASSWORD"
+     }
+   }
+diff --git c/designs/Wallpaper.qml w/designs/Wallpaper.qml
+index 1d6bb9b..8bcae0a 100644
+--- c/designs/Wallpaper.qml
++++ w/designs/Wallpaper.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ Item {
+   id: wall
+ 
+@@ -16,7 +17,7 @@ Item {
+ 
+   Rectangle {
+     anchors.fill: parent
+-    color: Color.background
++    color: Commons.Color.background
+   }
+ 
+   Image {
+diff --git c/designs/Weather.qml w/designs/Weather.qml
+index 2206b0a..6fdfd7b 100644
+--- c/designs/Weather.qml
++++ w/designs/Weather.qml
+@@ -3,6 +3,7 @@ import Quickshell
+ import Quickshell.Io
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: field.input
+@@ -126,7 +127,7 @@ DesignBase {
+         Text {
+           anchors.verticalCenter: parent.verticalCenter
+           text: lock.current ? lock.glyph(lock.current.weatherCode) : "󰖐"
+-          color: Color.lock.borderActive
++          color: Commons.Color.lock.borderActive
+           font.family: Style.font.family
+           font.pixelSize: Math.round(Style.font.baseSize * 7)
+         }
+@@ -134,7 +135,7 @@ DesignBase {
+           anchors.verticalCenter: parent.verticalCenter
+           text: lock.temp
+           textFormat: Text.PlainText
+-          color: Color.lock.text
++          color: Commons.Color.lock.text
+           font.family: Style.font.family
+           font.pixelSize: Math.round(Style.font.baseSize * 8)
+           font.weight: Font.DemiBold
+@@ -144,14 +145,14 @@ DesignBase {
+       Text {
+         text: lock.desc
+         textFormat: Text.PlainText
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+       }
+       Text {
+         text: (lock.area ? lock.area + "  ·  " : "") + (lock.current ? "feels like " + lock.feels + "  ·  " + lock.current.humidity + "% humidity  ·  " + lock.current.windspeedKmph + " km/h" : "")
+         textFormat: Text.PlainText
+-        color: lock.withAlpha(Color.lock.text, 0.65)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.65)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.body
+       }
+@@ -164,23 +165,23 @@ DesignBase {
+             required property var modelData
+             required property int index
+             width: 96; height: 92; radius: 12
+-            color: lock.withAlpha(Color.lock.background, 0.55)
++            color: lock.withAlpha(Commons.Color.lock.background, 0.55)
+             border.width: 1
+-            border.color: lock.withAlpha(Color.lock.text, 0.1)
++            border.color: lock.withAlpha(Commons.Color.lock.text, 0.1)
+             Column {
+               anchors.centerIn: parent
+               spacing: 2
+               Text {
+                 anchors.horizontalCenter: parent.horizontalCenter
+                 text: parent.parent.index === 0 ? "Today" : Qt.formatDate(new Date(parent.parent.modelData.date), "ddd")
+-                color: lock.withAlpha(Color.lock.text, 0.6)
++                color: lock.withAlpha(Commons.Color.lock.text, 0.6)
+                 font.family: Style.font.family
+                 font.pixelSize: Style.font.caption
+               }
+               Text {
+                 anchors.horizontalCenter: parent.horizontalCenter
+                 text: lock.dayGlyph(parent.parent.modelData)
+-                color: Color.lock.borderActive
++                color: Commons.Color.lock.borderActive
+                 font.family: Style.font.family
+                 font.pixelSize: Style.font.display
+               }
+@@ -188,7 +189,7 @@ DesignBase {
+                 anchors.horizontalCenter: parent.horizontalCenter
+                 text: parent.parent.modelData.maxtempC + "° / " + parent.parent.modelData.mintempC + "°"
+                 textFormat: Text.PlainText
+-                color: Color.lock.text
++                color: Commons.Color.lock.text
+                 font.family: Style.font.family
+                 font.pixelSize: Style.font.bodySmall
+               }
+@@ -198,14 +199,14 @@ DesignBase {
+       }
+     }
+ 
+-    Rectangle { width: 1; height: 220; color: lock.withAlpha(Color.lock.text, 0.2); anchors.verticalCenter: parent.verticalCenter }
++    Rectangle { width: 1; height: 220; color: lock.withAlpha(Commons.Color.lock.text, 0.2); anchors.verticalCenter: parent.verticalCenter }
+ 
+     Column {
+       anchors.verticalCenter: parent.verticalCenter
+       spacing: 6
+       Text {
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 8)
+         font.weight: Font.DemiBold
+@@ -213,7 +214,7 @@ DesignBase {
+       }
+       Text {
+         text: Qt.formatDate(lock.now, "dddd, d MMMM")
+-        color: lock.withAlpha(Color.lock.text, 0.75)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+       }
+diff --git c/designs/Zen.qml w/designs/Zen.qml
+index ddd4bda..a3a3477 100644
+--- c/designs/Zen.qml
++++ w/designs/Zen.qml
+@@ -2,6 +2,7 @@ import QtQuick
+ import QtQuick.Effects
+ import qs.Commons
+ 
++import qs.Commons as Commons
+ DesignBase {
+   id: lock
+   inputItem: input
+@@ -40,7 +41,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: lock.clock("HH:mm")
+-        color: Color.lock.text
++        color: Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Math.round(Style.font.baseSize * 7)
+         font.weight: Font.Light
+@@ -51,7 +52,7 @@ DesignBase {
+       Text {
+         anchors.horizontalCenter: parent.horizontalCenter
+         text: Qt.formatDate(lock.now, "dddd d MMMM").toUpperCase()
+-        color: lock.withAlpha(Color.lock.text, 0.65)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.65)
+         font.family: Style.font.family
+         font.pixelSize: Style.font.subtitle
+         font.letterSpacing: 5
+@@ -69,7 +70,7 @@ DesignBase {
+         visible: lock.passwordVisible && lock.dotCount > 0
+         text: lock.passwordText
+         textFormat: Text.PlainText
+-        color: lock.errorState ? Color.lock.textError : Color.lock.text
++        color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.text
+         font.family: Style.font.family
+         font.pixelSize: Style.font.display
+         font.letterSpacing: 2
+@@ -83,7 +84,7 @@ DesignBase {
+           model: Math.min(lock.dotCount, lock.maxDots)
+           Rectangle {
+             width: lock.dotSize; height: lock.dotSize; radius: lock.dotSize / 2
+-            color: lock.errorState ? Color.lock.textError : Color.lock.text
++            color: lock.errorState ? Commons.Color.lock.textError : Commons.Color.lock.text
+             scale: 1
+             Component.onCompleted: { scale = 0.2; popIn.start() }
+             NumberAnimation on scale { id: popIn; from: 0.2; to: 1; duration: 140; easing.type: Easing.OutBack; running: false }
+@@ -94,7 +95,7 @@ DesignBase {
+       Rectangle {
+         anchors.centerIn: parent
+         width: 2; height: 22
+-        color: lock.withAlpha(Color.lock.text, 0.8)
++        color: lock.withAlpha(Commons.Color.lock.text, 0.8)
+         visible: lock.dotCount === 0 && lock.inputEnabled && !lock.authenticatingPassword && !lock.errorState
+         SequentialAnimation on opacity {
+           loops: Animation.Infinite
+@@ -116,7 +117,7 @@ DesignBase {
+         anchors.horizontalCenter: parent.horizontalCenter
+         width: parent.width
+         height: 1
+-        color: lock.errorState ? Color.lock.textError : (lock.authenticatingPassword ? Color.lock.borderActive : lock.withAlpha(Color.lock.text, 0.35))
++        color: lock.errorState ? Commons.Color.lock.textError : (lock.authenticatingPassword ? Commons.Color.lock.borderActive : lock.withAlpha(Commons.Color.lock.text, 0.35))
+         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+       }
+     }
+@@ -127,7 +128,7 @@ DesignBase {
+         : (lock.errorState ? lock.failureMessage
+         : (lock.fingerprintConfigured ? lock.fingerprintHint("Type your password or touch the sensor") : "Type your password"))
+       textFormat: Text.PlainText
+-      color: lock.errorState ? Color.lock.textError : lock.withAlpha(Color.lock.text, 0.55)
++      color: lock.errorState ? Commons.Color.lock.textError : lock.withAlpha(Commons.Color.lock.text, 0.55)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.body
+       font.letterSpacing: 2
+diff --git c/extras/lock-designs/MyDesign.qml w/extras/lock-designs/MyDesign.qml
+index 0ddf11e..9c651be 100644
+--- c/extras/lock-designs/MyDesign.qml
++++ w/extras/lock-designs/MyDesign.qml
+@@ -3,6 +3,7 @@
+ // PasswordField, LockInput, Wallpaper, Avatar). Keep it as is.
+ import QtQuick
+ import qs.Commons
++import qs.Commons as Commons
+ import "../plugins/io.github.sirjul1337.lock-explorer/designs"
+ 
+ DesignBase {
+@@ -32,7 +33,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: Qt.formatTime(lock.now, "HH:mm")
+-      color: Color.lock.text
++      color: Commons.Color.lock.text
+       font.family: Style.font.family
+       font.pixelSize: Math.round(Style.font.baseSize * 8)
+       font.weight: Font.DemiBold
+@@ -41,7 +42,7 @@ DesignBase {
+     Text {
+       anchors.horizontalCenter: parent.horizontalCenter
+       text: "Hello " + lock.userName + ", this is my design"
+-      color: lock.withAlpha(Color.lock.text, 0.75)
++      color: lock.withAlpha(Commons.Color.lock.text, 0.75)
+       font.family: Style.font.family
+       font.pixelSize: Style.font.heading
+     }
