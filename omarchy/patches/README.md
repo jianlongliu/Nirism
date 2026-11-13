@@ -48,3 +48,33 @@ git checkout plymouth/custom/generate.sh
 ### 上游状态
 
 已提 [SirJul1337/omarchy-lock-explorer#40](https://github.com/SirJul1337/omarchy-lock-explorer/issues/40)。上游若合并，可撤下本补丁。
+
+## `lock-explorer-user-designs.patch`
+
+**插件**：`io.github.sirjul1337.lock-explorer`
+**基准版本**：v1.8.1 + 本机 Qt 6.12 `Commons.Color` 补丁（2026-11-13；先打颜色补丁，再打这个）
+**作用**：让 `~/.config/omarchy/lock-designs/` 里的用户设计在 Quickshell 0.3.2 下正常解析，而不是回落成默认 Card。
+
+**根因**：Quickshell 0.3.2 里 `.pragma library` 的 `Designs.USER` 不跨 QML 组件/engine 共享。`Service.qml` 扫描到用户设计（USER=3），但 `LockHost.qml` 里的 `Designs.USER` 是空数组，`Designs.resolve()` 回落到 `DEFAULT_ID = "card"`。表现：Split 锁屏和跟随它的 LUKS 快照都变成 Card；`lock status` / `shell.json` 仍显示 `my-splitjianlong`。
+
+**改动**：`LockHost.qml` 增加 `userDesigns` 参数并优先按 id 查它；Service 的两处 LockHost（真锁屏/预览）、Explorer 的 snapshot/gallery、Editor 预览各传自己 engine 的列表；Service 经 Bridge API 暴露 `userDesigns` 给 Explorer。
+
+### 重打
+
+```bash
+cd ~/.config/omarchy/plugins/io.github.sirjul1337.lock-explorer
+git apply --check -p1 <repo>/omarchy/patches/lock-explorer-user-designs.patch
+git apply -p1 <repo>/omarchy/patches/lock-explorer-user-designs.patch
+omarchy restart shell
+```
+
+**验证**：`omarchy-shell lock previewDesign my-splitjianlong` 应显示右侧面板 + `Jianlong Liu`；若显示居中 Card，说明补丁没生效。
+**LUKS**：本补丁只修锁屏设计解析；已经烘进 UKI 的旧快照仍是 Card，需在 boot 页按 Apply（或等下一次背景/主题重同步）重新抓图并重建 UKI。
+
+### 回退
+
+```bash
+cd ~/.config/omarchy/plugins/io.github.sirjul1337.lock-explorer
+git apply --reverse -p1 <repo>/omarchy/patches/lock-explorer-user-designs.patch
+omarchy restart shell
+```

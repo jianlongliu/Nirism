@@ -2,6 +2,38 @@
 
 改动日志（倒序，最新在上）。提交代码时同步更新本节。
 
+## 2026-11-13 — 锁屏用户设计回落 Card（Quickshell 0.3.2 / lock-explorer）
+
+- **症状**：Super+L 锁屏、`previewDesign my-splitjianlong`、LUKS 快照全变成默认 Card；`lock status` 仍显示 `my-splitjianlong`，`shell.json` 与两个本地设计文件都在。
+- **根因**：Quickshell 0.3.2 下 `Designs.js` 的 `.pragma library` 状态不跨 QML 组件/engine 共享。`Service.qml` 扫描到 USER=3，`LockHost.qml` 里 USER=0，`Designs.resolve("my-splitjianlong")` 回落到 `DEFAULT_ID = "card"`。调试实证：`SERVICE DEBUG user=3` / `LOCKHOST DEBUG user=0`。
+- **修复**：`LockHost.qml` 增加 `userDesigns` 参数并优先按 id 查它；Service 的两处 LockHost（真锁屏/预览）传 `root.userDesigns`，Explorer 的 snapshot/gallery 与 Editor 预览传 `service.userDesigns`；Service 经 Bridge API 暴露 `userDesigns`。补丁存 `Nirism/omarchy/patches/lock-explorer-user-designs.patch`（基线 = v1.8.1 + 本机 Qt 6.12 `Commons.Color` 补丁）。
+- **验证**：`omarchy restart shell` 后 `omarchy-shell lock previewDesign my-splitjianlong` 显示右侧面板 + `Jianlong Liu`（截图确认）；内置 `split` 与 `my-card` 仍正常。**LUKS 快照仍待重贴**：当前 UKI 里是 23:35 由 Card 回落生成的图，需 boot 页 Apply 或下一次背景/主题重同步（会 pkexec + 重建 UKI 30–60s）。
+
+## 2026-11-13 — Qt 6.12 解锁：13 个 IgnorePkg 全升
+
+- **背景**：`/etc/pacman.conf` 自 2026-10-09 用 `IgnorePkg` 卡住 Qt 6.11.2；仓库里 40 来个包已按 6.12 重编，系统混版本破损——`ldd` 实测 KIO/qt6-webengine/omasnap 等 186 个文件报 `version 'Qt_6.12' not found`。
+- **插件前置**：omarchy 4.5.0-3 的 shell 已全量限定导入；给 `~/.config/omarchy/plugins` 下 113 个 QML 文件、943 处裸 `Color.*` 补 `import qs.Commons as Commons` + `Commons.Color.*`；锁屏本地设计 `lock-designs/{Card,SplitJianlong}.qml` 另补 2 文件 / 21 处，`Designer.js` 默认片段与 `DesignerItem.qml` 生成包装同步加限定导入。否则 Qt 6.12 的 `QtQuick.Color` 单例会让插件/锁屏取色变 undefined。备份：`~/.cache/omarchy-plugins-pre-qt612-20261113.tar.gz`、`~/.cache/omarchy-lock-designs-pre-qt612-20261113.tar.gz`。
+- **升级**：删 `IgnorePkg` 行（备份 `/etc/pacman.conf.bak-20261113`），`pkexec env OMARCHY_ALLOW_DIRECT_PACMAN=1 pacman -Syu` 升 13 个包：qt6 全套 6.12.0、quickshell 0.3.2.r7、layer-shell-qt 6.8.2、fcitx5-qt 5.1.16-2、omakade 1.17.0。直接 pacman 被 `00-omarchy-update-guard.hook` 拦截，故按 hook 提示带 `OMARCHY_ALLOW_DIRECT_PACMAN=1`；日常更新仍走 `omarchy update`。
+- **验证**：`quickshell --version` → `Quickshell 0.3.2 ...`；Color 探针裸名 `undefined` / `Commons.Color.foreground=#cacccc`；`pacman -Dk` 无错、`pacman -Qu` 0；`ldd` 剩余 10 个 `not found` 全是未装的可选后端（Firebird/ODBC/Botan/Plasma/Quick3D）；`omarchy restart shell` 后新 PID 无 Color/QML 错误，截图浮栏正常；`lock previewDesign my-splitjianlong` 预览锁屏设计配色正常（布局解析问题见上一条 2026-11-13 锁屏用户设计回落）。
+- **回退**：恢复 `/etc/pacman.conf.bak-20261113` 的 `IgnorePkg` 行 + 用 `/var/cache/pacman/pkg/` 旧包 `pacman -U`；插件解压上述 tar。
+- **文档同步**：`omarchy-visual-tweaks.md` §14。
+
+## 2026-11-13 — 动态主题自激循环：ghostty 反复打印 `reloaded the configuration`
+
+- **症状**：ghostty 窗口持续打印 `reloaded the configuration`；`matugen-theme.service` 28 分钟烧掉 21 分钟 CPU（约 75% 单核），`omarchy-theme-set tonal-spot` 约每 0.5s 被拉起一次，`current/theme/*`（含 `ghostty.conf`）持续重写。
+- **根因**：`materal-update` apply 时用文件 guard 防递归，但 `omarchy-theme-set` 在非 TTY 下把 theme-set 钩子丢进 detached 后台批次（`/usr/share/omarchy/bin/omarchy-theme-set:628-630`）；`materal-update` 在钩子执行前已退出并删掉 guard → 钩子再调 `materal-update` → 无限重设主题。`omarchy-restart-terminal:13-15` 每次 `killall -SIGUSR2 ghostty`，即终端里的 reloaded 提示；不是 Hyprland 配置问题。
+- **修复**：钩子改为优先检查 `MATERAL_INTERNAL_APPLY=1` / `OMARCHY_THEME_SKIP_BACKGROUND=1`（detached 子进程继承环境变量）；文件 guard 写 PID 仅作兜底，属主进程已死则清理。`materal-update` 生成结果与现有 `colors.toml` 相同时直接退出，不再重跑 theme-set。
+- **验证**：服务重启后 10s 内 `theme.generation` 与 `theme/ghostty.conf` mtime 不变、`CPUUsageNSec` delta = 0、无 `omarchy-theme-set` 进程；受控改一次源 colors.toml → 恰好触发 1 次 theme-set，随后 6s 无新进程、generation 不再变化。
+- **文件**：`hooks/theme-set.d/materal-theme-set-hook`、`~/.local/bin/materal-update`（不在本仓库）；备份 `*.bak.1794583357`。
+
+## 2026-10-09 — ghostty 一律不共享实例（io 线程崩溃只死一个窗口）
+
+- **问题**：ghostty 1.3.1 的**每窗口 io 线程**（线程名 `io`）空指针崩——故障指令 `mov 0x108(%r14),%rcx` 而 `r14 = 0`，8 次崩溃（09-21 → 10-09）同偏移 `ghostty + 0x151c90d`，触发点在新 surface 起来后 3–36 秒。8 次崩溃的进程命令行**全部**带 `--gtk-single-instance=true`（系统桌面条目给的）→ 一个线程死掉带走该 app 的**全部窗口**。
+- **落点（两处，系统文件未动）**：① 用户级 `~/.local/share/applications/com.mitchellh.ghostty.desktop` —— 两处 `Exec=`（含 `[Desktop Action new-window]`）改 `--gtk-single-instance=false`，并**删掉 `DBusActivatable=true`**（留着它，启动器会把新窗口交给已在跑的单实例进程，绕开这份文件）；② `~/.config/ghostty/config` 末尾加 `gtk-single-instance = false`（命令行不带 flag 时兜底）。命令行 flag 压配置值，而 omarchy 入口（`SUPER+RETURN`、`SUPER+CTRL+RETURN` 开 herdr → `omarchy-launch-terminal` → `uwsm-app -- xdg-terminal-exec`）走的正是桌面条目的 `Exec`，所以两份都要。
+- **验证**：`desktop-file-validate` rc=0；`xdg-terminal-exec --print-id` 仍解析到 `com.mitchellh.ghostty.desktop`；`omarchy-launch-terminal <自退探针>` 抓 `/proc/$PPID/cmdline` → 实测 `--gtk-single-instance=false`（改前为 `=true`）。
+- **性质与残留**：只改**爆炸半径**，不修那个空指针；**已在跑**的老 app 仍是单实例（其窗口里 `Ctrl+N` 开新标签页仍在同进程内开 surface）。符号不可得（debuginfod 对 build id `36aeb61c…` 返 404、无 `ghostty-debug` 包、PKGBUILD 用 ReleaseFast）→ 根因待自建带符号版本复现。
+- **文档同步**：`omarchy-apps.md` 速查表加 **Ghostty** 行、§五 新增 **5.1**、§七 加「程序为什么崩 / 崩在哪」手法行；证据链、`coredumpctl` 取证命令与待办见 `agent-scratch/ghostty-io-crash.md`。
+
 ## 2026-09-27 — bar 组件 `coding-sparrow.systempulse` 移除
 
 - `shell.json` 的 bar 段删掉该组件（连同 `checkConnectivity` / `compactBar` / `notifications` / `showCpu` 等它自己的配置）。

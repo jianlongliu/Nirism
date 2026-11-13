@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
 # theme-set hook: 主题切换后，若切到的是 materal 动态主题，立即按当前壁纸重新取色。
-# 守卫：materal-update 内部 apply 时先设 guard，此 hook 再被触发时直接跳过，避免死循环。
+# 守卫：materal-update 自己 apply 时会重跑 omarchy-theme-set；而 omarchy 在非 TTY
+# 下把 theme-set 钩子丢进 detached 后台批次（omarchy-theme-set:628-630），钩子真正
+# 执行时 materal-update 早已退出、文件 guard 也被删了，所以靠 guard 文件挡不住递归。
+# 改为检查显式环境变量（后台子进程会继承），由 materal-update 发起的 apply 一律跳过。
 set -u
 
 slug="$1"
-GUARD="$HOME/.cache/materal/guarded-by-internal"
 
+[[ "${MATERAL_INTERNAL_APPLY:-}" == "1" ]] && exit 0
+[[ "${OMARCHY_THEME_SKIP_BACKGROUND:-}" == "1" ]] && exit 0
+
+GUARD="$HOME/.cache/materal/guarded-by-internal"
+# 兼容旧的 guard：只有 guard 的属主（materal-update）还活着才跳过；进程已死的
+# 残留 guard 直接清掉，免得动态配色被永久卡住。
 if [[ -f "$GUARD" ]]; then
+  guard_pid=$(cat "$GUARD" 2>/dev/null || true)
+  if [[ "$guard_pid" =~ ^[0-9]+$ ]] && kill -0 "$guard_pid" 2>/dev/null; then
+    exit 0
+  fi
   rm -f "$GUARD"
-  exit 0
 fi
 
 # 只处理 materal 主题（有 matugen.toml 的）

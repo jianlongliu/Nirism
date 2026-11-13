@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // GNOME 45 风格 workspace 纯点指示器:每个 workspace 一个实心小圆,
@@ -59,7 +60,7 @@ BarWidget {
   readonly property real expanded: root.vertical ? dot : dot * 2.6
   readonly property real spacing: dot * 0.5
 
-  readonly property color base: root.bar ? root.bar.barForeground : Color.foreground
+  readonly property color base: root.bar ? root.bar.barForeground : Commons.Color.foreground
 
   // bar 上的模块是零间距紧挨着排的(Row { spacing: 0 }),模块之间的空隙
   // 全靠各个 widget 自己的内边距。胶囊右边紧挨着 omarchy.active-window:

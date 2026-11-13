@@ -1,0 +1,97 @@
+# lock-explorer: pass userDesigns into LockHost (Quickshell 0.3.2 engine split)
+# Base: v1.8.1 + local Qt 6.12 Commons.Color patch (2026-11-13)
+# Apply from the plugin dir: git apply -p1 <this file>
+
+--- a/LockHost.qml
++++ b/LockHost.qml
+@@ -6,6 +6,11 @@
+   id: host
+ 
+   property string designId: Designs.DEFAULT_ID
++  // User designs are scanned in Service.qml, whose Designs.js instance is not
++  // shared with this file in Quickshell 0.3.2 (the .pragma library state is
++  // per QML engine/component load here). The caller passes its own USER list;
++  // without it every user design silently falls back to DEFAULT_ID (card).
++  property var userDesigns: []
+   property int revision: 0
+   property bool fadeIn: false
+ 
+@@ -57,6 +62,10 @@
+ 
+   readonly property var design: {
+     var r = revision
++    var list = userDesigns || []
++    for (var i = 0; i < list.length; i++) {
++      if (list[i] && list[i].id === designId) return list[i]
++    }
+     return Designs.resolve(designId)
+   }
+   readonly property bool isUserDesign: design && design.path ? true : false
+--- a/Service.qml
++++ b/Service.qml
+@@ -33,6 +33,13 @@
+     return Designs.DEFAULT_ID
+   }
+   readonly property string designId: designOverride.length > 0 ? designOverride : configuredDesignId
++  // This engine's user-design list. LockHost gets it explicitly because its
++  // own Designs.js import does not see this module's USER array on Quickshell
++  // 0.3.2 — without it user designs resolve to DEFAULT_ID (card).
++  readonly property var userDesigns: {
++    var r = designsRevision
++    return Designs.USER
++  }
+   readonly property bool designHasClip: {
+     var r = designsRevision
+     var d = Designs.byId(designId)
+@@ -2601,6 +2608,7 @@
+           anchors.fill: parent
+           fadeIn: true
+           designId: root.showsInput(lockSurface.screen) ? root.designId : "companion"
++          userDesigns: root.userDesigns
+           revision: root.designsRevision
+           backgroundPath: root.backgroundPath
+           backgroundVersion: root.backgroundVersion
+@@ -2666,6 +2674,7 @@
+       LockHost {
+         anchors.fill: parent
+         designId: root.previewDesignId.length > 0 ? root.previewDesignId : root.designId
++        userDesigns: root.userDesigns
+         revision: root.designsRevision
+         backgroundPath: root.backgroundPath
+         backgroundVersion: root.backgroundVersion
+@@ -3231,6 +3240,7 @@
+       readonly property bool multimediaAvailable: root.multimediaAvailable
+       readonly property bool menuEntryInstalled: root.menuEntryInstalled
+       readonly property var components: root.components
++      readonly property var userDesigns: root.userDesigns
+       readonly property bool locked: root.locked
+       readonly property bool previewVisible: root.previewVisible
+       readonly property bool stingPlaying: root.stingPlaying
+--- a/Explorer.qml
++++ b/Explorer.qml
+@@ -1059,6 +1059,7 @@
+         id: snapshotHost
+         anchors.fill: parent
+         designId: root.activeDesignId
++        userDesigns: root.service ? root.service.userDesigns : []
+         revision: root.service ? root.service.designsRevision : 0
+         twelveHour: root.twelveHour
+         backgroundPath: root.service ? root.service.backgroundPath : ""
+@@ -3184,6 +3185,7 @@
+             LockHost {
+               anchors.fill: parent
+               designId: root.selectedDesign ? root.selectedDesign.id : root.activeDesignId
++              userDesigns: root.service ? root.service.userDesigns : []
+               revision: root.service ? root.service.designsRevision : 0
+               twelveHour: root.twelveHour
+               backgroundPath: root.service ? root.service.backgroundPath : ""
+--- a/Editor.qml
++++ b/Editor.qml
+@@ -208,6 +208,7 @@
+               id: preview
+               anchors.fill: parent
+               designId: editor.design ? editor.design.id : ""
++              userDesigns: editor.service ? editor.service.userDesigns : []
+               revision: editor.service ? editor.service.designsRevision : 0
+               backgroundPath: editor.service ? editor.service.backgroundPath : ""
+               backgroundVersion: editor.service ? editor.service.backgroundVersion : 0

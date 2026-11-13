@@ -6,6 +6,8 @@ import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import qs.Ui
 import qs.Commons
+import qs.Commons as Commons
+import "../../ui/panel-shadows" as ShadowPanels
 import "Model.js" as Model
 
 Panel {
@@ -177,10 +179,10 @@ Panel {
   readonly property string toggleHint: anyAudible ? "Mute" : "Unmute"
 
   readonly property color hoverFill: bar
-    ? Style.hoverFillFor(bar.foreground, Color.accent)
+    ? Style.hoverFillFor(bar.foreground, Commons.Color.accent)
     : "transparent"
   readonly property color selectedFill: bar
-    ? Style.selectedFillFor(bar.foreground, Color.accent)
+    ? Style.selectedFillFor(bar.foreground, Commons.Color.accent)
     : "transparent"
 
   function sectionCount(section) {
@@ -666,7 +668,7 @@ Panel {
     }
   }
 
-  KeyboardPanel {
+  ShadowPanels.KeyboardPanel {
     id: panel
     anchorItem: button
     owner: root

@@ -2,6 +2,23 @@
 
 改动日志（倒序，最新在上）。提交代码时同步更新本节。
 
+## 2026-11-13（screensaver-shim / dictation 键位）
+- **`autostart.lua`**：启动 `screensaver-shim`，把 OBS/窗口化 mpv 的 D-Bus `Inhibit()` 转成 Hyprland idle inhibitor，避免录制/看视频时 20 分钟锁屏（shim 随 Wayland 连接退出，崩溃不会留下永不解锁）。
+- **`bindings.lua`**：补回 dictation 的 `SUPER+CTRL+X`（toggle）与 `F9`（push-to-talk）；Omarchy 新版默认已改成 Alt+Space / 右 Alt，这两条只是保留旧键位。
+
+## 2026-10-25（SUPER+CTRL+RETURN 换成「崩了自动重开」的包装）
+- **`bindings.lua`**：`hl.unbind("SUPER + CTRL + RETURN")` 后 `o.bind(..., "herdr-launch")`，新增 `~/.local/bin/herdr-launch`。**为什么**：ghostty 1.3.1 的**每窗口 `io` 线程**会偶发 SIGSEGV（空指针取偏移 `0x108`；`coredumpctl` 自 2026-09-21 起 11 次同签名，其中 **8 次的命令行里根本没有 `-e herdr`**）→「herdr 把 ghostty 搞崩」是误判，崩的是 ghostty 自己；只是 herdr 这个入口最显眼（今天那次窗口起来 ~0.3s 就被带走）。herdr 的 pane 全活在其 server 里，客户端崩掉只丢画面，所以包装只在「被 SIGSEGV/SIGABRT/SIGBUS 打死」时重开（最多 3 次），并把 ghostty 的 stderr 留档到 `~/.cache/herdr-launch/`；用户关窗 / TERM / herdr 自己退出（`rc < 128`）一律不重开。
+- **为什么不用 `uwsm-app`**：实测 `uwsm-app -- xdg-terminal-exec …` **不透传退出码**（子进程被 SIGSEGV 打死仍返 `rc=0`），拿不到崩溃信号；改成直接 `xdg-terminal-exec`，`--dir` 走 `omarchy-cmd-terminal-cwd`（与原绑定的 `omarchy-launch-terminal` 同源）。代价：该窗口不再落在 `app-graphical.slice` 的 uwsm scope 里。
+- **验证**：`bash -n` 通过；保存后 `hyprctl configerrors` 空（**没跑 `hyprctl reload`**——本仓有过 0.56.2 Lua 重载崩溃史）；`hyprctl binds -j` 里 `mod=68 key=RETURN desc=Herdr` 只剩一条，默认那条已 unbind。端到端：手动运行包装 → 窗口正常起；`kill -SEGV` 它的 ghostty → `crashes.log` 记 `attempt 1: ghostty 被信号 11 杀死，重开` 并真开出新窗口；`kill -TERM` 新窗口 → 包装退出、无重开、正常退出时不留日志。
+- **事故**：测试时 `grep` 抓错 pid，我把你正在用的 herdr 窗口（pid 26302）当成测试目标打了 SIGSEGV —— 03:12:04 那次 coredump 是**我手打的**，不是 bug 复发（随后你重开了 35598）。两次自造 coredump（26302 / 34732）已在 `agent-scratch/ghostty-io-crash.md` 标注。
+- **根因未修**：ghostty 侧那个空指针还在（上游 bug，`ReleaseFast` 无符号）。证据链与下一步（`async-backend` A/B、自建 ReleaseSafe 拿函数名）见（本地笔记存档）。
+
+## 2026-10-04（超椭圆圆角 `rounding_power = 4`）
+- **`looknfeel.lua`**：`decoration` 块加 `rounding_power = 4`。**为什么**：`rounding = 20` 配 Hyprland 默认的 2 是正圆弧，4 才是 superellipse（Apple squircle），角部更饱满。来源：`github.com/johnloringpollard/omarchy-mac-starter` 的 `modules/desktop.lua`（同代基线，本机 Hyprland 0.56.2 / Quickshell 0.3.1 / Omarchy 4.0.4 与之完全一致）。
+- **验证**：`hyprctl reload` + `hyprctl configerrors` 空；`getoption decoration:rounding_power` 改前 `2.0 / set:false`（从未显式设过）→ 改后 `4.0 / set:true`。像素法：同坐标 `grim -g` 抓窗口左上角 90x90（logical），改前后 `magick -compose difference` maxima 212/255、8.1% 像素变化；角区 40x40 内窗口色像素 1219 → 1520（角更满，方向与 squircle 一致）。
+- **只搬了这一项**：同仓的 layer 投影（QML `RectangularShadow` + 留白窗口替身）暂不搬——0.56.2 `hl.layer_rule` **无 `shadow` 字段**（实测 `unknown field 'shadow'`），要做必须私有化 `qs.Ui.PopupCard`/`KeyboardPanel`，撞「标准组件不私有化」约定。
+- 相关：（本地笔记存档） §7.2。
+
 ## 2026-09-28（scrolling 布局下方向键在带状态栏全屏上"失灵"）
 - **`looknfeel.lua`**：基础块后追加 `hl.config({ binds = { movefocus_cycles_fullscreen = true } })`。**为什么**：工作区跑 scrolling 布局（`hyprctl activeworkspace -j` → `tiledLayout: "scrolling"`，`clients -j` → `fullscreenHandler: "scrolling"`），于是 `SUPER+F` 的最大化属于**布局托管全屏**。Hyprland 找方向聚焦候选窗口时（`src/desktop/state/WindowQuery.cpp` 的 `find()`），对布局托管 FS 要求 `binds:movefocus_cycles_fullscreen = true` **且** `misc:on_focus_under_fullscreen != 0` 才继续遍历；后者 omarchy 出厂已设 1，前者是 Hyprland 默认 false → 候选窗口全被 `continue` 跳过 → `SUPER+LEFT/RIGHT` 看起来是死键。语义见上游用例 `hyprtester/src/tests/main/scroll.cpp:1070`（scrolling 下该选项**不做 cycle**，只是放开方向聚焦）。
 - **副作用**：`SUPER+CTRL+F` 的真全屏同样变得可被方向键移走焦点。**工作区**切换（`SUPER+TAB`/`PAGE_UP`/`PAGE_DOWN`/`SUPER+滚轮`）走 `focus({ workspace })` 另一条路径，从未受影响。

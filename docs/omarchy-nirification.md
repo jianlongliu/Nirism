@@ -46,7 +46,7 @@ hyprpm enable scrolloverview
 ```
 
 > 插件用仓库**默认分支**即可。若插件编译/加载因 Hyprland 版本不匹配失败，用 `hyprpm add <url> <git-rev>` 锁定适配你 Hyprland 版本的提交——先用默认、失败再锁 rev。
-> ⚠️ 但**依赖 ABI 类不匹配锁 rev 躲不过（2026-09-10 实测）**：Hyprland 包重编译只换依赖版本、commit 不变时（如 0.56.2-2 rebuild with aquamarine-0.15.0），hyprpm 仍拿过期的 `headersRoot` 快照重编，插件加载抛 `[he] Version mismatch` 且 hyprpm 打印假成功（以 `hyprctl plugins list` 为准）。完整根因+无 sudo 修复见（本地笔记存档）「09-10 事故」节：手动 make 编译 .so 顶替 `/var/cache/hyprpm/jianlongliu/hyprland-scroll-overview/` 下同名文件即可。
+> ⚠️ 但**依赖 ABI 类不匹配锁 rev 躲不过（2026-09-10 实测）**：Hyprland 包重编译只换依赖版本、commit 不变时（如 0.56.2-2 rebuild with aquamarine-0.15.0），hyprpm 仍拿过期的 `headersRoot` 快照重编，插件加载抛 `[he] Version mismatch` 且 hyprpm 打印假成功（以 `hyprctl plugins list` 为准）。完整根因+无 sudo 修复见本文「附 · hyprpm / ABI 事故与手动编译」节：手动 make 编译 .so 顶替 `/var/cache/hyprpm/jianlongliu/hyprland-scroll-overview/` 下同名文件即可。
 > 验证：`hyprpm add` 还可追加 `[git rev]` 参数（见 `hyprpm --help`）。
 
 验证已加载：`hyprctl plugins list` 应含 `Plugin scrolloverview`；`hyprpm list` 里 `scrolloverview enabled: true`。
@@ -439,6 +439,211 @@ scrolloverview 是 **Hyprland 原生插件**（yayuuu/hyprland-scroll-overview�
 
 > 若 bar 上同时有「工作区指示器」和 scrolloverview：二者互补不冲突——指示器只做外观，scrolloverview 只做切换交互。
 
+
+## 附 · hyprpm / ABI 事故与手动编译（原 memory 全文）
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+
+niri 风格的滚动工作区总览插件，基于 hyprexpo 的 scroll-overview 分支。本机已用 hyprpm 装好并 enabled（`hyprpm list` 见 `scrolloverview` enabled，`hyprctl plugins list` 见已加载）。
+
+- 配置在 `~/.config/hypr/plugins.lua`（2026-08-24 起按 dhh/Omarchy 模块化，原在 hyprland.lua）：`hl.config({ plugin = { scrolloverview = { gesture_distance=300, scale=0.5, workspace_gap=100, layout="vertical", wallpaper=2, blur=true, shadow={enabled=true, range=50} } } })`。`hl.config` 是合并式，可多处调用（defaults 里也多次调用），不会覆盖。
+
+### 关键坑：wallpaper 键在本机的真实语义（2026-08-27 实测纠正）
+- 文档写 `wallpaper=0` = "只用全局壁纸"，**在本机不成立**：插件的「全局层」没接上 hyprpaper/swww 那张图，所以 `0` = overview **空底（没壁纸）**，不是"用全局壁纸"。`1`=只有工作区壁纸，`2`=两层都画。
+- **结论**：本机 `wallpaper` 只许 `1` 或 `2`，**禁止设 `0`**（会弄丢 overview 壁纸，且 `0` 也去不掉顶缝）。
+- **去顶上那条风景缝的正解不是改 wallpaper，而是把 `scale` 加到 0.75–0.85**（如 0.8）：窗口顶边放大顶到卡片上沿，把风景带挡住。
+- **铁律（调这个插件时）**：`wallpaper` 只许 1/2、禁 0；**禁止改** `layout` / `input` / 滚动方向 / `workspace_gap` / `shadow` 等滚动逻辑；只允许在 0.75–0.85 区间调 `scale`。曾因多改了 workspace_gap/layout/shadow 把滚动手感搞坏，用户明确要求只动 scale+wallpaper。
+- 触发键本机用 **SUPER+TAB = Scroll overview**（`bindings.lua`）。原来 Omarchy 默认 SUPER+TAB 是 "Next workspace"，已 `hl.unbind("SUPER + TAB")` 腾出；SUPER+SHIFT+TAB 仍是 previous workspace，未动。
+
+### 关键坑：dispatch 触发方式（踩过，非显然）
+- 配置里**不能**用 `o.bind("SUPER + TAB", "Scroll overview", "scrolloverview:overview toggle all")`：它会走 `hl.dsp.exec_cmd("scrolloverview:overview toggle all")`，虽返回 "ok" 但**实际什么都不做**（静默空操作）——按了没反应，且不报错。
+- **必须用 Lua 函数形式**（README 官方写法），`bindings.lua` 里：
+  ```lua
+  hl.unbind("SUPER + TAB")
+  hl.bind("SUPER + TAB", function()
+    hl.plugin.scrolloverview.overview("toggle all")
+  end, { description = "Scroll overview" })
+  ```
+  `hl.plugin.scrolloverview.overview("toggle all")` 经 hyprctl dispatch 实测能真打开/关闭（截图坐实网格）。
+- **不能**用 `hyprctl dispatch scrolloverview:overview "toggle all"` 这种 CLI 直接调法：解析不了冒号名，会走 Lua 回退报 `function arguments expected near 'toggle'`。
+- bindings.lua 里写 `description`（o.bind 第二参数，或 hl.bind 的 `{ description = ... }`）会自动出现在速查面板。
+
+### 关键坑：重启后插件不自动加载（autostart 必须 hyprpm reload）
+- hyprpm 的 `enabled` 只是持久化"状态"，插件真正注入 Hyprland 靠 `hyprpm reload`。**重启后不会自动加载**：2026-08-25 用户重启后 `hyprctl plugins list` 是 "no plugins loaded"，`plugin.scrolloverview.*` 全部报 unknown config key（`plugins.lua:3`）——插件没加载，Hyprland 不认识这些键。
+- 即时修复：`hyprpm reload`（加载插件）+ `hyprctl reload`（重载配置）→ `hyprctl configerrors` 清空。
+- **持久化**：`~/.config/hypr/autostart.lua`（此前为空，这是根因）加：
+  ```lua
+  hl.on("hyprland.start", function()
+    hl.exec_cmd("sleep 2 && hyprpm reload && hyprctl reload")
+  end)
+  ```
+  `sleep 2` 给 Hyprland socket 就绪时间（hyprpm reload 要调 hyprland）。末尾 `hyprctl reload` 让 gated 配置在插件加载后被重新应用。
+
+### 关键：消除启动首次解析闪错（2026-08-25 正解，已验证）
+- 症状：开机 Hyprland 报 "unknown config key" 一闪而过，约 2 秒后（hyprpm reload 加载插件）自动正常。
+- 根因：`plugins.lua` 在**首次配置解析**时就提交 `plugin.scrolloverview.*`，但插件要等 hyprland.start 触发、sleep 2 后 hyprpm reload 才注入 → 解析时插件未加载 → unknown key。
+- **正解**：`plugins.lua` 用守卫，只在插件已加载时才提交配置：
+  ```lua
+  if hl.plugin.scrolloverview ~= nil then
+    hl.config({ plugin = { scrolloverview = { ... } } })
+  end
+  ```
+  `hl.plugin.<name>` 是**按已加载插件动态存在**的（用不存在的插件名探测为 nil 证实）。首次解析时插件未加载 → 守卫跳过 → 不报错；加载后 → 应用。
+- **坑（踩过）**：不要在配置解析期内调用 `hyprctl`（IPC）——`hyprctl reload` 触发的解析里再跑 `os.execute("hyprctl ...")` 会**重入死锁**（"IPC didn't respond in time"），guard 会误判插件未加载导致配置不生效。`hyprctl keyword plugin:*` 在本版(Hyprland 0.56)也不支持（"use eval"）；`hyprctl eval` 是执行 Lua 字符串，`hyprctl eval 'hl.config({...})'` 可运行时设插件选项且不重入。
+- 诊断顺序：`hyprctl plugins list`（实际加载）vs `hyprpm list`（enabled 状态），二者不一致 = 插件没加载 → config unknown key。此坑对**任何 hyprpm 插件**都成立。
+- 完整方案文档（含回滚/救回指南）：（本地笔记存档） §五
+
+### 关键坑：关闭 overview 后约 1 秒切工作区无动画（2026-08-30，扒源码坐实，非 bug）
+- 症状：Super+Tab 开 overview 后，**快速再按一次关闭，紧接着 Super+滚轮切工作区是瞬切无 slidevert 动画**；等约 1 秒（overview 完全收起）再滚就正常。
+- 根因：插件打开时 `applyWorkspaceAnimationOverrides()`（scrollOverview.cpp）把 `workspaces/workspacesIn/workspacesOut` 三个动画节点**全局禁用**（好让 overview 内部滚动瞬切）；只在 overview **完全销毁**（`~CScrollOverview()` 析构、关闭的 scale 动画跑完后 `removeOverview`）才 `restoreWorkspaceAnimationOverrides()` 恢复。关闭过渡期间动画仍是禁用的。
+- **不是用户姿势问题，也不是 bug**：相关修复提交 `0805139`（"restore animations on close"）已包含在 f9248ab（=本机当前版），但它只改了恢复方式（存整个 config 而非 enabled/speed/bezier/style），**没改恢复时机**（仍析构时才恢复）。作者未出更新解决此 ~1 秒空窗。
+- 规避：关闭后稍等 overview 收起再滚轮即正常；想要 overview 内部滚动也带动画=改不了配置，除非改插件源码。
+- 历史：同类永久丢失动画的 bug 有人提过（**issue #21**，2026-06-06，作者以提交 `0805139` 修复——只改恢复方式、没改时机，仍析构才恢复）。本残留时序没人单独提，**2026-08-30 已提新 issue #73** 引用 #21，附复现+源码根因。
+- **2026-09-24 状态：作者已修，本机已升级**。作者 2026-09-20 在 #73 回复「Should be fixed now」+ 提交 `b32d9cec`（*fix: workspace switch now instantly closes overview, so the animation can play correctly*，04e 2026-09-21）。
+  - 修法（diff 核实）：hook 住 `Config::Actions::changeWorkspace`（`findFnOrThrow("changeWorkspace", ...)`，hook 在插件卸载时才 unhook），`hkChangeWorkspace` 里 **一发现有 workspace 切换就 `removeOverview()` 立刻结束 overview**，把屏幕渲染马上还给 Hyprland → 动画随即恢复。`removeOverview` 从 static 提为公共 API 并加 `closing && closeRemovalPending` 前置判断。
+  - 作者自承副作用：**动画时长设很长时会看到「瞬间放大」感**，他认为是可接受取舍。
+  - 同期还有 `d532a6be` **feat: per-monitor configuration**（每显示器独立配置，本机多屏相关，未研究）。
+  - 本机升级后版本 = master `10eeefa`（含两者）。**行为效果待用户实测确认**。
+
+### Super+滚轮：有界动态工作区（2026-08-25）
+- 默认 `SUPER + mouse_down/up` = `hl.dsp.focus({ workspace = "e+1"/"e-1" })`。`e+1` 是"跳下一个**空**工作区"，会在已有非空工作区间跳、**末尾不新建**（早已实测：工作区列表不增长、还回退）。
+- 已在本机 `~/.config/hypr/bindings.lua` 覆盖为自定 `scroll_next/scroll_prev`：当前有窗口 → `focus(id+1)`（Hyprland 对不存在编号自动创建）；进入空工作区(`windows==0`)就停 → 得 niri 式"滚到底进一个空工作区就停"（1、2 有 app → 滚到 3 停，不续建 4、5）。
+- 关键 API：`hl.get_monitor_at_cursor()`/`hl.get_active_monitor()`、`monitor.active_workspace.id/.windows`；用 `hl.dispatch(hl.dsp.focus(...))` 在真实按键路径执行（同 ScrollOverview 官方 Dynamic-workspaces recipe 写法）。
+- 实现与回退见（本地笔记存档）「有界动态工作区」；绑定用 `hyprctl -j binds` 校验、别用 grep -B。
+- 可复用的官方 dynamic-workspaces recipe（overview submap 内滚到底新建）在插件 wiki：`docs/wiki/Dynamic-workspaces.md`（版本 `f9248ab6`，与本机插件一致），用户选择不用（要的是桌面滚轮、非 overview）。
+
+#### 多屏适配：上面这套的「单屏假设」失效（2026-09-13 已修）
+
+- **症状**：接第二块屏后 SUPER+滚轮"失效"——主屏工作区不换、焦点被甩到另一块屏。
+- **根因**：Hyprland 工作区 ID **全局唯一**且**绑在各自显示器**上（当时 ws1→DP-2、ws2→HDMI-A-1）。`focus({workspace=N})` 语义是"**去 N 所在的屏**"、不是"在当前屏切到 N" → 单屏看不出来，双屏即跨屏跳。且光标没动时 `get_monitor_at_cursor()` 仍返回原屏 → 反复跳同一目标，表现为"卡死不切"。
+- **已实施修法**（用户选「分段」，不要每屏独立编号）：① `monitors.lua` 加 `hl.workspace_rule({ workspace = "6", monitor = "HDMI-A-1" })`，便携屏钉死 6 号专用于看片；② `bindings.lua` 四个函数（scroll_next/prev、move_next/prev）统一加 `current.monitor ~= MAIN_MONITOR` 早退 + 常量 `MAIN_MONITOR="DP-2"`、`MAIN_WS_MIN/MAX=1/5` → 滚轮只在主屏 1–5 跑，光标在便携屏时完全不响应（用户要的就是"左边不切"）。
+- **为什么不用「每屏各自 1/2/3」**：Hyprland 数字工作区全局唯一，要那样必须改**命名工作区**，会打断 SUPER+1~0 及其 SHIFT/SHIFT+ALT 变体、`jianlongliu.workspaces` 胶囊的按 id 排序、以及 `SUPER+SHIFT+ALT+方向` 移屏手势。**成本在"工作区模型"、不在代码量**（`hl.get_workspaces()` 直接给 `.id/.name/.windows/.monitor`，代码很小）。
+- **API 实测**：`hl.get_workspaces()[i].monitor` 是 `HL.Monitor` userdata，**支持 `==` 和 `.name` 比较**；`hl.workspace_rule` 要 table 且 `workspace` 字段必须是字符串；`hl.workspace.move` **必须带 `monitor`**；`hl.dsp.focus` 只接受 `direction/monitor/window/urgent_or_last/last`（**不接受 `workspace` 字段**，但 `focus({workspace=...})` 仍能用，别被该报错误导）；`hl.dsp` 无 `focusworkspaceoncurrentmonitor`（该 dispatcher 只在 C++ 层，Lua API 未暴露）。
+- **坑**：改完**要看副屏当前工作区**。Hyprland 的空工作区回收规则（2026-09-13 实测）：**每块屏"当前"的那个工作区即使为空也会被保留；非当前的空工作区会被自动回收**。所以若副屏当前停在空的 ws2，滚轮第一次 `focus(2)` 依旧跳屏 → 处理办法二选一：把该空工作区搬回主屏（`focus(该ws)` + `workspace.move({ monitor = "DP-2" })`），或**直接把副屏切到目标工作区**（如 focus ws6）让旧空工作区自然回收。
+- **验证**：`configerrors` 空 + `hyprctl -j binds` 看描述 + 实测 `focus(2)` 后 `focused=true` 仍在 DP-2。**别用 `hyprctl dispatch movecursor` 验证**（本机失效）。
+
+#### 上游对多屏的考虑程度（2026-09-13 查证，回答"插件作者和 omarchy 没考虑多屏吗"）
+
+- **插件作者：考虑了**。官方 recipe `docs/wiki/Dynamic-workspaces.md` 的 `last_workspace_state()` **按显示器过滤工作区**：遍历 `hl.get_workspaces()` 时判 `table_value(workspace, "monitor") == monitor` 才计入，再在该屏内取 max id 判断"是否最后一个"；新建走 `focus({monitor=该屏名})` 再 `focus({workspace="emptynm"})`。→ 本机的故障**不是插件缺多屏支持，而是本机自写的「有界动态工作区」没采用它的配方**（用裸 `current.id + 1`）。
+- **omarchy 出厂：不完全**。默认绑定是 `tiling.lua` 的 `hl.dsp.focus({ workspace = "e+1" })` / `e-1`，**实测 `e+1` 跨屏跳**：便携屏 ws6 上执行 → 跑到主屏 ws1；主屏 ws1 上执行 → 跑到便携屏 ws6（两屏各只有 1 个非空工作区时呈"来回切换"）。→ 依赖的是 Hyprland 的 `e` 选择器语义，**不保证"留在本屏"**。另实测 `focus({workspace="emptynm"})` 会在**当前屏**新建空工作区。
+- **Hyprland 本身**：工作区 ID **全局唯一**（不是"每屏一套"）是设计如此，niri 才有每屏独立工作区集。所以"多屏工作区"这层必须由**配置**补，上游不会替你保证。
+- **结论**：三层各有缺口——① Hyprland 设计上全局编号；② omarchy 出厂用 `e+1` 不保本屏；③ 本机自写覆盖彻底没多屏意识。分段方案补的正是这层。
+
+
+### 关键坑：加载报 `[he] Version mismatch`（2026-09-10 事故，已修复）
+
+- 症状：`hyprpm reload` 打印「✔ Loaded scrolloverview」**假成功**，但 `hyprctl plugins list` 是 `no plugins loaded`；手动加载才露真话：
+  `hyprctl plugin load <path>` → `Plugin ... could not be loaded: plugin crashed/threw in main: [he] Version mismatch`（界面红字 init failure version mismatch）。
+- 根因：Hyprland **0.56.2-2（09-01）是 rebuild with aquamarine-0.15.0**——Git commit 没变（efb5099），但依赖 ABI 变了。hyprpm 的编译 headers 快照 `/var/cache/hyprpm/jianlongliu/headersRoot` 停在 **08-24**（aq_0.14.0），09-10 跑 `hyprpm update` 照旧用这套过期 headers 重编 → 插件 ABI 签名 `efb5099_aq_0.14_...` vs 运行端 `efb5099_aq_0.15_...` → throw。
+- 为什么 state.toml 看不出：hyprpm 的 hash（`efb5099..._aq_0.15_hu_0.14_hg_0.5_hc_0.1_hlg_0.6`）是**拿运行态推导的**，不是编译态；`hyprctl version` 的 Version ABI string 一模一样 → hyprpm 死活认为没问题。
+- 铁证对比（两份只差 aquamarine 版本，逐字节其余一致）：
+  - `/usr/include/hyprland/src/version.h`（系统 headers，Arch hyprland 包装到 /usr/include/hyprland）：`AQUAMARINE_VERSION "0.15.0"`
+  - `/var/cache/hyprpm/jianlongliu/headersRoot/include/hyprland/src/version.h`：`AQUAMARINE_VERSION "0.14.0"`
+  - 同 Hyprland Discussion #15655 一类：commit 不变、依赖 ABI 变了，hyprpm 不刷新 headers。
+- 修复（无 sudo 可做，2026-09-10 已验证）：
+  1. 手动编正确的 .so（走系统 headers，不碰 headersRoot）：
+     ```
+     git clone https://github.com/yayuuu/hyprland-scroll-overview.git ~/hyprland-scroll-overview
+     cd ~/hyprland-scroll-overview && make clean
+     make all                              # pkg-config hyprland → /usr/include/hyprland（aq_0.15）
+     hyprctl plugin load ~/hyprland-scroll-overview/scrolloverview.so   # 应返回 ok
+     ```
+  2. 顶替 hyprpm 缓存里的坏 .so（该目录已 `pkexec chown -R jianlongliu`，可直写）：
+     `cp ~/hyprland-scroll-overview/scrolloverview.so /var/cache/hyprpm/jianlongliu/hyprland-scroll-overview/scrolloverview.so`
+  3. `hyprpm reload && hyprctl reload`（state 未变时**不需要 sudo**）→ `hyprctl plugins list` 有 scrolloverview、`hyprctl getoption plugin:scrolloverview:workspace_gap` = int:50 set:true、`hyprctl configerrors` 空。
+  - autostart.lua / plugins.lua **一行没改**，开机走原路自动恢复。
+- 相关行为（2026-09-10 实测）：
+  - hyprpm **拒绝以 root 运行**（`pkexec hyprpm list` → `[ERR] Don't run hyprpm as a superuser`）。
+  - `hyprpm purge-cache` 强制走"superuser cmd"（sudo/doas/run0，不支持 pkexec、无跳过开关）；目录 chown 给用户后仍要求提权。无密码环境别走 purge（会报 `[ERR] Failed to run a superuser cmd`）。
+  - **2026-09-10 已由 `hyprpm update -f` 实证归位**（用户亲自跑）：headersRoot 刷新为 aq_0.15.0（目录 mtime 不变属正常——同文件集原地改写，以 `version.h` 内容为准），hyprpm 自动用新 headers 重编了缓存 .so（新 sha）并成功加载（`plugins list` 新 Handle），state hash 与运行端一致。至此手动顶替方案**退役**（`~/hyprland-scroll-overview/` 备用源码已于 2026-09-24 删除，见文末）；若未来 `hyprpm update` 又拉来不兼容 master 导致重炸：有密码/NOPASSWD 时先 `hyprpm update -f` 刷新 headers；无密码时退回上文「修复」节的手动 make 顶替流程。
+  - 运行插件版本已从 08-30 记录的 f9248ab 变为 master `5e96ae20ec73`（克隆 HEAD `5e96ae2`，= 今早 hyprpm 拉的同一提交，源码不是事故主因）。
+- 本轮物证：坏 .so+state 备份在 `/tmp/opencode/hyprpm-backup-20260910/hyprland-scroll-overview/`；正确 .so 源码当时在 `~/hyprland-scroll-overview/`。
+
+### 注：插件归 hyprpm 管，手动 clone 已删（2026-09-24）
+
+- **本机 hyprpm 的仓库状态不在 `~/.local/share/hyprpm/`（该目录本机不存在）**，而在 **`/var/cache/hyprpm/<user>/`**：`state.toml`（headers/ABI hash，含 `dont_warn_install`）+ `<repo>/state.toml`（author/hash/url/`enabled`/filename）+ `<repo>/*.so`。`/var/cache/hyprpm` 是**二进制里硬编码**的，跟 `XDG_CACHE_HOME` 无关（本机 XDG_CACHE_HOME=~/.cache），所以别去 ~/.local/share 或 ~/.cache 找 hyprpm 状态。
+- 运行中的 Hyprland **mmap** 的是 `/var/cache/hyprpm/jianlongliu/hyprland-scroll-overview/scrolloverview.so`（查 `/proc/<Hyprland pid>/maps` 即证）；`/run/user/1000/hyprpm/<user>/` 只是**编译期工作树**（源码树 + `.build/` + 产物），与运行态无关。
+- 故 `~/hyprland-scroll-overview/`（09-10 手动 clone，20M、无本地改动、HEAD=10eeefa 上游 master）**2026-09-24 已删**：无进程/配置引用（旧引用只在 `.bak`、CHANGELOG、`plugins.lua` 注释里），删除后插件照常加载、SUPER+TAB 总览正常。以后要再手动 make 顶替，按上文修复节重新 `git clone` 即可（`/tmp/scrolloverview-backup-20260924/` 留有一份旧 .so）。
+
+### 关键技巧：无 tty 环境用 PATH 垫片让 hyprpm 完成提权步骤（2026-09-10 实证）
+
+- 背景：上文记的「hyprpm 不支持 pkexec」——准确说是 hyprpm 的提权助手 `NSys::root::*`（`hyprpm/src/helpers/Sys.cpp`）只从 PATH 里找 `sudo`/`doas`/`run0` 并**按名字**调用，不接受 pkexec、也没有跳过开关。装/删仓库时它要 `mkdir`/`install`/`rm -rf` 到 `/var/cache/hyprpm`（root 属主），所以会死在 `[ERR] addNewPluginRepo: failed to create cache dir`。
+- **可行解法（agent 无 tty 时）**：临时造一个转发到 pkexec 的 `sudo` 垫片，只对当次命令的 PATH 生效：
+  ```sh
+  mkdir -p /tmp/hyprpm-root-shim && cat > /tmp/hyprpm-root-shim/sudo <<'EOF'
+  #!/bin/sh
+  if [ "$1" = "-k" ]; then exit 0; fi
+  if [ "$1" = "echo" ] && [ "$2" = "hyprland" ]; then echo hyprland; exit 0; fi
+  exec pkexec "$@"
+  EOF
+  chmod 755 /tmp/hyprpm-root-shim/sudo
+  PATH="/tmp/hyprpm-root-shim:$PATH" hyprpm add <url>     # 或 remove
+  ```
+  `-k`（dropSudo）和预热用的 `echo hyprland` 必须短路，否则 hyprpm 的提权探测会走偏。**用完即删**（`rm -rf /tmp/hyprpm-root-shim`），别留长期 PATH 污染。
+- 注意与上文区别：hyprpm **自己不能被 pkexec 提权运行**（会 `Don't run hyprpm as a superuser`）；垫片提权的是它 spawned 的子命令，不是 hyprpm 本体，二者不矛盾。
+- 编译阶段不需要 root：`hyprpm add` 先 clone + `make all` 在 `$XDG_RUNTIME_DIR/hyprpm/<user>/`（/run），失败只发生在最后写 /var/cache 的「Installing repository」步。
+
+### 关键坑：`hyprpm update` 报 `removePluginRepo: failed to remove dir`，.so 装不进缓存（2026-09-24 实证）
+
+- 症状：`hyprpm update` 前面全绿（`✔ repository ... has updates` → `✔ built scrolloverview into scrolloverview.so`），**最后一步 `[ERR] removePluginRepo: failed to remove dir`**，退出码仍 0；缓存 `.so` 完全没变（mtime 不动、版本仍是旧的）。
+- 第一层原因：`/var/cache/hyprpm/jianlongliu/` 与 `hyprland-scroll-overview/`、`state.toml` 一度是 **root 属主**（2026-09-15 02:06 被 root 写过；用户若用 `sudo hyprpm update` 就会这样覆写属主），用户身份写不进 → 报错。
+- **第二层原因（chown 回用户后仍失败！）**：`pkexec chown -R jianlongliu:jianlongliu /var/cache/hyprpm/jianlongliu` 之后重跑 `hyprpm update` **照旧报同一个 ERR**，而**手动 `cp` 同一个 `.so` 进同一目录却成功** → 说明不是普通写权限，而是 hyprpm 的删除步骤本身（要动 `/var/cache/hyprpm` 这层 root 属主目录 / 递归删）缺 root。**结论：别跟这个 ERR 纠缠**。
+- **绕过（已验证，一次成功）**：
+  1. `hyprpm update` 让它照常 clone + 编译（编译阶段不需要 root），产物在 **`$XDG_RUNTIME_DIR/hyprpm/jianlongliu/scrolloverview.so`**（即 `/run/user/1000/hyprpm/jianlongliu/`，那个目录同时是构建源码树，`git log` 可查编译的是哪个提交）。
+  2. `cp -f /run/user/1000/hyprpm/jianlongliu/scrolloverview.so /var/cache/hyprpm/jianlongliu/hyprland-scroll-overview/scrolloverview.so`
+  3. `hyprpm reload` → `hyprctl plugins list` 看 **`Version:` 变成目标提交短 sha**（本次 `5e96ae20ec73` → `10eeefa0519e`）、Handle 变化、`hyprctl configerrors` 空。
+- 注意：缓存里 `<repo>/state.toml` 的 `hash` 字段**不会被这一步更新**（仍是旧提交 sha），下次 `hyprpm update` 会再次认为"有更新"并重编重报 ERR —— 无害，重复上面绕法即可。
+- 提权通道：本机 `pkexec` 在 Ante 的 audit session 里直连找不到代理，用 `systemd-run --user --wait --collect --property=StandardOutput=file:/tmp/x.log pkexec <cmd>` 包一层，再让用户点图形弹窗（本次 2 秒通过）。
+- 升级后本机实测：`plugin:scrolloverview:scale=0.7 / workspace_gap=50 / layout=vertical / wallpaper=2 / blur=true` 全部保持，SUPER+TAB 绑定仍在，**`~/.config/hypr/plugins.lua` 一行没动**。
+
+### 坑：hyprpm 已成独立包（2026-09-30，hyprland 0.56.2-3 拆分）
+
+- Arch 把 hyprpm 从 `hyprland` 主包**拆出为 `extra/hyprpm`**（同版本号，紧跟 hyprland）。hyprland 的 optional dep 里留着 `hyprpm: build and install plugins`，所以 `pacman -Qi hyprland` 能看出端倪。
+- 症状：升级 hyprland 后 `/usr/bin/hyprpm` 消失 → `hyprpm list` 报 command not found，**开机 `autostart.lua` 的 `hyprpm reload` 静默失败** → `hyprctl plugins list` = no plugins loaded、SUPER+TAB 总览哑掉、`~/.config/hypr/plugins.lua` 的 `plugin:*` 配置不生效。**插件本体与状态不受影响**（`/var/cache/hyprpm/<user>/` 原样保留，`enabled=true`）。
+- 修法：`pacman -S hyprpm`（管理员装，走 pkexec 需点图形弹窗）→ `hyprpm reload && hyprctl reload`。装后 `pgrep -x Hyprland` 的 `/proc/<pid>/maps` 应见 hyprpm 项。
+- 判断「插件到底加载没」仍用老三样：`hyprctl plugin list`（真话）vs `hyprpm list`（只是 enabled 状态）；`hyprctl getoption plugin:scrolloverview:*` 应读到 scale=0.7 / workspace_gap=50 / wallpaper=2。
+
+### 重大发现：Hyprland 原生「相对本屏」工作区选择器 `r`（2026-09-13 实测）
+
+**结论：niri 式「每屏独立切工作区」不需要命名工作区，Hyprland 原生有 `r` 选择器。**
+
+**不是巧合——是内置选择器**：二进制有报错串 `Relative workspace on no mon!`（与 `special:`、`Invalid workspace` 同族），即「相对工作区」是官方选择器、且**必须有 monitor** 才能解析。
+
+`hl.dsp.focus({ workspace = "r+1" })` / `"r-1"` —— `r` = **相对当前显示器**。实测：
+
+| 场景 | 结果 |
+| --- | --- |
+| DP-2 (ws1) 执行 `r+1` | → **ws2，仍在 DP-2** |
+| DP-2 (ws1) 执行 `r-1` | → 原地不动（不跨屏、不变负数） |
+| HDMI-A-1 (ws6) 执行 `r+1` | → **ws7，新建在 HDMI-A-1** |
+| HDMI-A-1 (ws6) 执行 `r-1` | → **ws5，新建在 HDMI-A-1**（不是偷主屏的，是新造） |
+| 对照 `e+1` | **会跨屏跳**（早前实测） |
+
+语义：目标号 = 本屏当前号 ± n，**并确保落在本屏**（不存在就在本屏造）。所以 `r` 就是 niri「在本屏上下切工作区」的原生原语。
+
+**已验证的关键属性（2026-09-13 补充实测，出发时主屏段 1~3、便携屏 ws6）**：
+- **绝不跨屏**：8 次实测，焦点始终留在出发那块屏。
+- **不抢他屏的号**：① 主屏先造出 ws7，再从便携屏 ws6 执行 `r+1` → **没偷 ws7**，在便携屏新造 **ws8**；② 便携屏 ws2 执行 `r-1`（目标 ws1 在主屏且有窗口）→ **原地不动**，不跨屏也不抢。
+- **到边界停**：主屏 ws1 `r-1` → 不动（不到 0/负数、不跨屏）。
+- **⚠️ 会吃掉别屏的号**：便携屏从 ws6 连按 `r-1` → 依次在**便携屏**造出 ws5→ws4→ws3→ws2（3、2 本在主屏 1–3 段内）。后果：之后主屏 `focus({workspace="3"})` 会跑到便携屏。
+
+**编号挑选规律**（实测推断，**未穷尽验证，别当定论**）：沿方向找下一个「空闲 or 属于本屏」的号，遇别屏的号跳过，到 1 为止。上面三条都符合该模型。
+
+**含义**：本机那套「分段 + 屏守卫 + 范围钳制」（见上文多屏适配节）**仍然是当前实现的正确选择**（因为有边界、且用户要左边完全不切）；但若哪天想要真正的“每屏独立无限滚动”，直接用 `r±1` 即可，不必上命名工作区。
+
+### Scrolling layout 已上游化（0.55+）——hyprscroller 插件已并入主线（2026-09-13 查证）
+
+- **`hyprscroller` 不再是外挂插件**：Hyprland 0.56.2 二进制里含 `Layout::Tiled::CScrollingAlgorithm`、`N6Layout5Tiled19CScrollingAlgorithmE`。官方 wiki 有独立页 `Configuring/Layouts/Scrolling-Layout/`（"windows get positioned on an infinitely growing tape"）。
+- 启用：`hl.config({ general = { layout = "scrolling" } })`——**本机 `~/.config/hypr/looknfeel.lua:11-12` 里已有一行注释掉的示例**（omarchy 自带，注释写着 "Change to niri-like side-scrolling layout"）。本机当前仍是 `dwindle`（`hyprctl getoption general:layout`）。
+- **omarchy 已预调**：`/usr/share/omarchy/default/hypr/looknfeel.lua` 的出厂默认里有 `scrolling = { column_width = 0.49 }`（连 `dwindle.preserve_split`、`master.new_status` 等一起设）→ 本机 `hyprctl getoption scrolling:column_width` 读到 **0.49**，不是上游文档的默认 0.5。**所以启用 scrolling 只需翻 `general:layout` 一个开关。**
+- 配置块 `scrolling`：`column_width`(0.5)、`direction`(right)、`focus_fit_method`(1=fit)、`follow_focus`(true)、`follow_min_visible`(0.4)、`wrap_focus`(true)、`wrap_swapcol`(true)、`fullscreen_on_one_column`(true)、`explicit_column_widths`。**活动配置可读**：`hyprctl getoption scrolling:<key>`（本机实测能读出值）。按工作区覆盖：`hl.workspace_rule({ workspace="2", layout_opts={ direction="right" } })`。
+- layout 消息：`hl.dsp.layout("move +col"|"swapcol l"|"fit active"|"focus l"|"promote"|"consume"|"expel"|"inhibit_scroll"|"fit_into_view")`；窗口规则 `scrolling_width`。
+- ⚠️ **本机未启用、未实测**（仅确认二进制+文档存在，且 `hyprctl getoption scrolling:*` 可读）。
+
+### 注：wiki 路径变化
+Hyprland 0.55 起 hyprlang 废弃改 lua，wiki 也改版——`Configuring/Workspaces`、`Configuring/Monitors`、`Configuring/Dispatchers` 等旧路径**现返回 404**。查上游文档先找得到入口页面再进，别直接猜路径。
 ## 总结
 
 **要做四件事**：

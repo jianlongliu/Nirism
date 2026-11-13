@@ -41,6 +41,8 @@ hl.config({
     -- Use round window corners.
     -- 20 = the value Omablur used to pin here (was Omarchy's stock 10).
     rounding = 20,
+    -- 4 = superellipse (Apple-style squircle) instead of stock Hyprland's 2.
+    rounding_power = 4,
 
     blur = {
       enabled = true,
@@ -95,3 +97,8 @@ hl.animation({ leaf = "fadeSwitch", enabled = true, speed = 5, bezier = "easeOut
 --   },
 -- })
 
+
+-- Opt another application in to Omarchy's standard transparency.
+-- Find its class with: hyprctl clients
+-- o.transparent_window("my-app")
+-- o.transparent_window("my-app", "0.9 0.85") -- Custom active/inactive opacity.

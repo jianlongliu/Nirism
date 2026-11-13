@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.Commons
+import qs.Commons as Commons
 import "../plugins/io.github.sirjul1337.lock-explorer/designs"
 
 DesignBase {
@@ -29,7 +30,7 @@ DesignBase {
     Text {
       anchors.horizontalCenter: parent.horizontalCenter
       text: Qt.formatTime(lock.now, "HH:mm")
-      color: Color.lock.text
+      color: Commons.Color.lock.text
       font.family: Style.font.family
       font.pixelSize: Math.round(Style.font.baseSize * 9)
       font.weight: Font.DemiBold
@@ -40,7 +41,7 @@ DesignBase {
     Text {
       anchors.horizontalCenter: parent.horizontalCenter
       text: Qt.formatDate(lock.now, "dddd, d MMMM")
-      color: lock.withAlpha(Color.lock.text, 0.85)
+      color: lock.withAlpha(Commons.Color.lock.text, 0.85)
       font.family: Style.font.family
       font.pixelSize: Style.font.display
       font.letterSpacing: 1
@@ -57,9 +58,9 @@ DesignBase {
     anchors.verticalCenter: parent.verticalCenter
     anchors.verticalCenterOffset: Math.round(parent.height * 0.12)
     radius: Math.max(Style.cornerRadius, 12) + 8
-    color: lock.withAlpha(Color.lock.background, 0.55)
+    color: lock.withAlpha(Commons.Color.lock.background, 0.55)
     border.width: 1
-    border.color: lock.withAlpha(Color.lock.text, 0.12)
+    border.color: lock.withAlpha(Commons.Color.lock.text, 0.12)
     layer.enabled: true
     layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Qt.rgba(0, 0, 0, 0.5); shadowBlur: 1.0; shadowVerticalOffset: 12 }
 
@@ -72,13 +73,13 @@ DesignBase {
       Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         width: 72; height: 72; radius: 36
-        color: Color.lock.borderActive
+        color: Commons.Color.lock.borderActive
         border.width: 3
-        border.color: lock.withAlpha(Color.lock.text, 0.25)
+        border.color: lock.withAlpha(Commons.Color.lock.text, 0.25)
         Text {
           anchors.centerIn: parent
           text: lock.userInitial
-          color: Color.background
+          color: Commons.Color.background
           font.family: Style.font.family
           font.pixelSize: Math.round(Style.font.baseSize * 2.6)
           font.weight: Font.Bold
@@ -91,7 +92,7 @@ DesignBase {
         Text {
           anchors.horizontalCenter: parent.horizontalCenter
           text: lock.greeting() + ", " + lock.userName
-          color: Color.lock.text
+          color: Commons.Color.lock.text
           font.family: Style.font.family
           font.pixelSize: Style.font.display
           font.weight: Font.DemiBold
@@ -101,7 +102,7 @@ DesignBase {
           text: lock.failedAttempts > 0
             ? (lock.failedAttempts + (lock.failedAttempts === 1 ? " failed attempt" : " failed attempts"))
             : "Enter your password to unlock"
-          color: lock.failedAttempts > 0 ? Color.lock.textError : Color.lock.placeholder
+          color: lock.failedAttempts > 0 ? Commons.Color.lock.textError : Commons.Color.lock.placeholder
           font.family: Style.font.family
           font.pixelSize: Style.font.subtitle
         }
@@ -121,7 +122,7 @@ DesignBase {
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 36
     text: lock.fingerprintConfigured ? "󰆠  Touch sensor or type password  ·  Esc clears" : "󰌾  Locked  ·  Esc clears input"
-    color: lock.withAlpha(Color.lock.text, 0.55)
+    color: lock.withAlpha(Commons.Color.lock.text, 0.55)
     font.family: Style.font.family
     font.pixelSize: Style.font.bodySmall
     font.letterSpacing: 1

@@ -61,6 +61,14 @@ hl.unbind("SUPER + SHIFT + mouse_down")
 hl.unbind("SUPER + SHIFT + mouse_up")
 o.bind("SUPER + SHIFT + mouse_down", "Focus window right", hl.dsp.focus({ direction = "r" }))
 o.bind("SUPER + SHIFT + mouse_up", "Focus window left", hl.dsp.focus({ direction = "l" }))
+-- Herdr 换个入口（2026-10-25）：ghostty 1.3.1 的每窗口 `io` 线程会偶发 SIGSEGV
+-- （空指针取偏移 0x108，2026-09-21 起 11 次 coredump，其中 8 次的命令行里没有
+--  herdr），崩一次窗口就消失、还得重按快捷键。herdr 的 pane 全活在它自己的 server
+-- 里，所以 ~/.local/bin/herdr-launch 只做两件事：被信号打死就重开一次、把 ghostty
+-- 的 stderr 留档（~/.cache/herdr-launch/）。用户关窗 / herdr 自己退出不重开。
+-- 原绑定：o.bind("SUPER + CTRL + RETURN", "Herdr", { omarchy = "terminal-herdr" })。
+hl.unbind("SUPER + CTRL + RETURN")
+o.bind("SUPER + CTRL + RETURN", "Herdr", "herdr-launch")
 
 -- ==== Bounded dynamic workspaces on SUPER+scroll (niri-style) ====
 -- Forward (scroll down): move to the next numbered workspace, creating it if
@@ -252,3 +260,10 @@ do
   end
 end
 -- fathom: end
+
+-- Dictation keys from before Alt + Space and Right Alt became the defaults.
+-- Remove these lines to give the keys back to applications.
+if o.dictation_installed and o.dictation_installed() then
+  o.bind("SUPER + CTRL + X", "Toggle dictation", "omarchy-dictation toggle")
+  o.bind_hold("F9", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop")
+end

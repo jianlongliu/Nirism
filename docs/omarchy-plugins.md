@@ -51,6 +51,15 @@ omarchy refresh shell      # 恢复默认 shell 配置(自动备份)
 
 ⚠️ 改内置插件前先 `omarchy plugin clone <id>` 再编辑克隆版,不要动 `/usr/share/omarchy/`。
 
+### 克隆的命名与后续手动项
+
+- 克隆后 bar 实例 id 自动变 `<用户名>.<id>`（本机 `jianlongliu.<id>`），`shell.json` 的 `bar.layout` 里 id 会被替换；**但顶部的 `bar.centerAnchor` 不会跟着改**——原 anchor 是 `omarchy.clock` 时须手动改成 `jianlongliu.clock`，否则中心锚定失效。
+- 只有**纯 `bar-widget`** 的内置控件适合克隆（clock / workspaces / indicators…）；带其它 kind 的（菜单 `menu`、OSD `panel`）克隆会**自动禁用源插件**——后果与替代方案见 §五 `jianlongliu.menu` 条目、`omarchy-visual-tweaks.md` §4.1。
+- **没有 `jianlongliu.shell` 这个插件**：bar 是容器进程名 `omarchy-shell`，别与插件 id 混淆。
+- Quickshell **没有 include / override QML 的机制** → 定制内置插件只有「克隆」一条正路。
+- 克隆是**静态副本**：上游 `/usr/share/omarchy/shell/plugins/` 更新后不会自动同步，随 omarchy 升级按 §9.1 逐文件 `diff` 补齐。
+- **发现 `jianlongliu.*` 克隆与上游有差异时，自行逐文件 `diff` 补齐**（除非确属有意改动）——不等提示、不询问。
+
 ## 三、bar 用 `charlieras262.floating-bar`（克隆自 omarchy.bar）
 
 > `bar.id = "charlieras262.floating-bar"`，即 Omarchy 默认 bar 已被换成 user 克隆版；原 `omarchy.bar` 状态为 disabled。
@@ -165,7 +174,7 @@ bar:               { position: top, transparent: false, id: charlieras262.floati
 
 下表都是**改第三方插件源码**的本地补丁，不在上游；分**防御补丁**（上游 bug 的本地兜底）与**定制补丁**（有意改外观/行为）。**`omarchy update` 不会碰它们**（它只换 `/usr/share/omarchy`，不碰 `~/.config/`，见 §9.4）；会被冲掉的是 `omarchy plugin update` 或对该插件仓 `git pull` / `reset`，届时按需重打（防御补丁的原诊断见本机归档笔记（未随本仓库发布））：
 
-> **补丁存档**：公开仓 `omarchy/patches/` 存可重打的 diff（当前一个：`lock-explorer-generate.sh.patch`，含重打/回退步骤）。插件目录被 `.gitignore` 排除且各自带独立 git 仓，故不放插件文件本体。
+> **补丁存档**：公开仓 `omarchy/patches/` 存可重打的 diff（当前两个：`lock-explorer-generate.sh.patch`、`lock-explorer-user-designs.patch`，含重打/回退步骤）。插件目录被 `.gitignore` 排除且各自带独立 git 仓，故不放插件文件本体。
 >
 > **floating-bar 例外：本机改动已收进插件仓库自己的提交**（`local:` 前缀，2026-09-25 合并为**单个**提交），不再靠散落的 `Bar.qml.bak.*` 重放。升级走 §9.3 的 rebase 流程即可（改的是跟踪分支，不是补丁文件）。
 
@@ -179,6 +188,7 @@ bar:               { position: top, transparent: false, id: charlieras262.floati
 | `meviusisback.ai-subs` | `assets/icons/commandcode.svg` | 定制：Command Code 品牌图原是「黑圆角方块 + 白 ⌘」，换成**裸 ⌘**（只留白色 ⌘ path，viewBox 收紧到占图标位 20/24）→ 见 §8.4 的重打脚本 |
 | `io.github.claudsondouglas.arcdock` | `ArcSlot.qml`（图标 `Image`，约 388 行） | 定制：图标**取图尺寸 = 显示尺寸 × 悬停放大 × DPR**，`magnifyScale 200` 时 ≈166px 却只显示在 83px 上（**2 倍缩小**）→ 双线性缩小丢掉 SVG 抗锯齿，细线图标（Zen 的同心环最明显）出硬台阶。加 `mipmap: true` 让缩小走 mipmap 采样。**实测**环区中间灰(AA)像素 752 → **936（+24%）**。⚠️ 放大倍率 ≤150% 时只缩 1.25 倍、mipmap 不触发 → 等于没加（2026-09-16 首次尝试就是这么"无效"的） |
 | `io.github.sirjul1337.lock-explorer` | `plymouth/custom/generate.sh` | 定制：开机解密屏「等待动画」从圆弧改为**面板边界竖线**（新增 conf 键 `wait_line`/`wait_line_width` + `panel_edge_x()` 自动找边界，找不到自动回退**上游圆弧**）；**补丁基准 = v1.8.1**（2026-09-24 rebase，diff 存公开仓 `omarchy/patches/`）；细节、重贴与回退见 §8.6 |
+| `io.github.sirjul1337.lock-explorer` | `LockHost.qml` / `Service.qml` / `Explorer.qml` / `Editor.qml` | 防御：Quickshell 0.3.2 下 `.pragma library` 的 `Designs.USER` 不跨 QML 组件/engine 共享 → 用户设计在 LockHost 里全部回落 `card`（Split 锁屏/LUKS 快照一起丢）。给 LockHost 加 `userDesigns` 参数，Service/Explorer/Editor 各传自己 engine 的列表，Service 经 Bridge API 暴露给 Explorer。补丁 `omarchy/patches/lock-explorer-user-designs.patch`；基线 = v1.8.1 + Qt 6.12 `Commons.Color` 补丁 |
 
 ### 8.2 看 shell 启动日志的正确姿势
 
@@ -322,12 +332,18 @@ grim -g "$((x-10)),$((y-10)) $((w+20))x$((h+20))" /tmp/dock.png
 **屏上的钟是活的（2026-09-27 起）**：快照里的钟是抓取那一刻的死像素，现在由 `bootclock`（mkinitcpio hook，`HOOKS` 里插在 `plymouth` 之前）把本次启动的本地时间写进主题键文件的 `[script-env-vars]`，主题脚本再用 `Image.Text` 画回原位——Plymouth 本身**没有**时间 API，只有这条注入路。位置/字号量自快照：文字左 3.04%、时分 81.76%/133pt、日期 92.61%/32pt；字体按设计的 DemiBold 用 2px 对角线画 4 次合成加粗（本机该族只有 Regular）。抓快照时设计副本会隐藏底部那列钟（`visible: !lock.snapshotMode`），底图里因此没有钟。
 装机文件、四个坑（initramfs busybox 无 `date`、空值渲染成 `#NULL` 要靠 `Plymouth.GetMode()` 门控、几何文件别放 `lock-designs/`、重启清 `/tmp`）、重抓触发法与回退：`agent-scratch/bootclock-live-clock.md`。
 
+**三项补充**（细节在 scratch，这里只留结论）：
+
+- **几何文件落点**：`~/.config/omarchy/bootclock/<design>.conf`（`clock_x/clock_y/clock_size/date_y/date_size` 等）；`lock-designs/` 下**任何**文件都会被当设计扫描。
+- **字体与锁屏同源**：`~/.local/share/fonts/GoogleSansCodeMaterial-Regular.ttf`（`fc-match 'monospace:weight=demibold'` 仍返回 Regular）。设计里的 `letterSpacing: -2` **无法复刻**——Plymouth 没有字距控制。
+- **重抓快照不通 IPC**：只存在于插件 QML。两条触发路——boot 页按 **Apply**；或换壁纸自动触发（`Service.qml` 的 `onBackgroundPathChanged` 在 `bootResync` 开且 `bootApplied` 以 `snapshot:` 开头时，8s 后发 `bootResnapshotRequested`）。
+
 **为什么不是手写孪生**：插件手写 plymouth 孪生只有 `terminal / storm / eyes / river`（`Designs.js` 里 `boot: true` 的四个），split 走 snapshot 路线——`plymouth/apply.sh` 的 `snapshot:` 分支拿 explorer 量出的输入框几何生成主题。
 
 | 事项 | 做法 |
 |---|---|
 | 换设计 / 换主题后重贴 | `SNAPSHOT_ENTRY="88.33,55.78,13.83,4.30,left" bash <插件>/plymouth/apply.sh snapshot:my-splitjianlong`；或在 boot 页按 **Apply**（follow 模式下插件自己重抓快照并重贴，通常不必手动） |
-| 改显示名 | 锁屏 `userName` 只认 `$USER`（`DesignBase.qml:53`，插件**无显示名设置**）；显示名靠**用户设计副本** `~/.config/omarchy/lock-designs/SplitJianlong.qml`（`text: "Jianlong Liu"` 字面量，需 `import "../plugins/io.github.sirjul1337.lock-explorer/designs"`） |
+| 改显示名 | 锁屏 `userName` 只认 `$USER`（`DesignBase.qml:53`，插件**无显示名设置**）；显示名靠**用户设计副本** `~/.config/omarchy/lock-designs/SplitJianlong.qml`（`text: "Jianlong Liu"` 字面量，需 `import "../plugins/io.github.sirjul1337.lock-explorer/designs"`）。⚠️ Quickshell 0.3.2 起用户设计还要过 `LockHost.userDesigns`（见 §8.1 的 `lock-explorer-user-designs.patch`），否则 LockHost 里 USER=0 → 回落默认 Card，Split 锁屏与 LUKS 快照一起丢 |
 | 回退 | boot 页选 **Untouched** + Apply，或 `apply.sh stock`；limine 原背景色存 `/boot/limine.conf.omarchy-lock-explorer.colors` |
 | 撤销等待动画补丁 | `git -C <插件> checkout plymouth/custom/generate.sh` 后重贴一次 |
 | 等待动画（现状） | 回车后：**面板边界竖线**——accent `#ffb0cf`、6px 宽、自上而下填满、12 帧 ÷8 ≈ **1.6s 一圈**、末两帧淡出（循环无切点）；边界由 `panel_edge_x()` 三条横带投票自动找，本机算出 **76.67%（x2944）**；找不到边界的设计自动回退**上游圆弧** |
@@ -346,6 +362,37 @@ grim -g "$((x-10)),$((y-10)) $((w+20))x$((h+20))" /tmp/dock.png
 - 预览类需求（不改系统看效果）：`apply.sh … --stage-only` 出 staging 目录 → `magick bg.png spin$i.png -geometry +2944+0 -composite` 逐帧合成 → `ffmpeg -framerate 7.5 -i f%02d.png …mp4` → `mpv --fs --loop-file=inf`。
 
 > 证据链、被否方案、上游 issue 全文：`agent-scratch/lock-explorer-boot-wait-line.md`；**上游 issue 已提：[SirJul1337/omarchy-lock-explorer#40](https://github.com/SirJul1337/omarchy-lock-explorer/issues/40)**（含内嵌 GIF + 4K 片；素材 gist `948138214cf7b9fa92eda859d9cb5f45`）——上游若合并，即可撤 §8.1 那条本地补丁。
+
+### 8.7 limine + UKI 的 Secure Boot 签名（本机）
+
+**引导链**：limine + UKI，limine.conf 里是 `protocol: efi` 直接 chainload UKI。ESP = `/dev/nvme0n1p1`（2G vfat）挂 `/boot`，fstab `fmask=0077` → 目录 `drwx------ root:root`，**任何检查都要 root**。签名工具 `sbctl`，密钥已 enroll（PK/KEK/db 有 `CN=Platform Key` / `Database Key`，微软证书保留），备份在 `/root/sb-sign-backup/`。
+
+**要签的 4 个文件**，全部 `sudo sbctl sign -s` —— **`-s` 是关键**，注册进 sbctl 数据库后升级才会自动补签：
+
+| 文件 | 身份 |
+|---|---|
+| `/boot/EFI/limine/limine_x64.efi` | 引导器本体 |
+| `/boot/EFI/BOOT/BOOTX64.EFI` | UEFI fallback |
+| `/boot/EFI/Linux/omarchy_linux.efi` | UKI（Arch fallback 内核） |
+| `/boot/EFI/Linux/omarchy_linux-omarchy.efi` | UKI（默认引导项） |
+
+**UKI 也必须签**：limine.conf 里 UKI 条目是 `protocol: efi` + `path: boot():/EFI/Linux/*.efi#<blake2b>`，**chainload 时由固件校验签名**，limine 不兜底（limine 官方 `USAGE.md` 明说这是例外）。内核/initramfs 的 `#hash` 只在 enroll 了 config 校验和时才被 limine 强制校验——本机 `ENABLE_ENROLL_LIMINE_CONFIG` 未设（`/etc/limine-entry-tool.conf` 里是注释掉的 `#ENABLE_ENROLL_LIMINE_CONFIG=no`）→ 现状是「**已签但无 limine 层硬化**」。
+
+**三个自动签名点**（不用手动管）：
+
+| 路径 | 触发时机 |
+|---|---|
+| `/usr/lib/initcpio/post/sbctl` | mkinitcpio 生成 UKI 后调 `sbctl sign`（**不写数据库**） |
+| `/etc/boot/hooks/post.d/90-limine-enroll-config`（→ `/usr/bin/limine-enroll-config`） | 内核更新流程里签 `limine_x64.efi` |
+| `/usr/share/libalpm/hooks/zz-sbctl.hook` | limine 包升级覆盖 EFI 后跑 `sbctl sign-all -g` 补签 |
+
+**三个坑**：
+
+1. **fallback 会被覆盖成未签名版**：`/etc/limine-entry-tool.d/omarchy-defaults.conf:13` 有 `ENABLE_LIMINE_FALLBACK=yes`，上游注释自认「开着 Secure Boot 时 fallback 不会自动签」→ 每次 `limine-update` / `limine-install` **跑完再补一刀 `sbctl sign-all`**。
+2. **签完 UKI 字节变了，`limine.conf` 里的 `#hash` 失效** → 跑一次 `sudo limine-update` 重算（它会重建 UKI → 自动签 → 刷新 hash）。核对用 `b2sum` 与 conf 里那 128 位十六进制对拍。
+3. **`//Snapshots` 老条目未签（未修）**：它们同为 `protocol: efi`，指向 `/boot/<machine-id>/limine_history/*.efi_sha256_*` 的副本，`limine-snapper-sync` 里没有任何 sbctl/sign 逻辑 → **Secure Boot 下选老快照起不来**；新快照拷的是已签 UKI，无此问题。
+
+**判读基线**：菜单里的 `/EFI fallback` 条目是自指（limine 套娃自己），无害；`sbctl verify` 报 `limine_history/` 下 not signed 属正常；enroll 后 `SetupMode` 变量值可能未被固件刷新，需重启确认。
 
 ## 九、上游跟踪：clone 与第三方插件
 
@@ -461,3 +508,99 @@ git rebase origin/master                     # 上游动过才需要；落后 0 
 **唯一例外**：`omarchy reinstall`（核弹路径，`omarchy-reinstall-configs` 执行 `cp -af /etc/skel/. ~/`，**不备份**）会把 extensions 拷回空模板 → 定制行**丢失**（不是冲突）。恢复：`git checkout -- extensions/omarchy-menu.jsonc`（配置仓库已跟踪该文件）。需要手动敲 + 过确认弹窗，不会自动发生。
 
 **唯一需要留意的耦合**：菜单行依赖 ① 上游 id `style.bar` 存在（parent 靠点号推断）② menu 的字段 schema。**上游若改名/删除 `style.bar`，本机那行会静默不显示（不报错）**。`omarchy update` 后进菜单扫一眼即可，无需其他动作。
+
+## 十、本地改动过的插件会不会被 plugin update 覆盖
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+
+> **2026-09-24 补充：别只靠 `omarchy plugin update` 判断新鲜度。** 第三方插件各自跟**作者的上游**走、与 omarchy 版本无关；`omarchy plugin update` 又是**静默**的（不列出谁有新版）。结果：本机漏了两个大版本无人察觉——`io.github.maajix.spotlight` 落后 **52** 个提交、`io.github.sirjul1337.lock-explorer` 落后 **39** 个（实测时才发现）。
+> **主动体检法**（用 `git -C`，别在循环里 `cd`——会让相对路径错位、只跑出一个插件）：
+> ```bash
+> B=~/.config/omarchy/plugins
+> for d in "$B"/*/; do p=$(basename "$d"); [ -d "$d/.git" ] || continue
+>   timeout 30 git -C "$d" fetch -q origin
+>   up=$(git -C "$d" rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null); [ -n "$up" ] || continue
+>   printf "%-46s 落后 %-3s 领先 %-3s\n" "$p" "$(git -C "$d" rev-list --count HEAD..$up)" "$(git -C "$d" rev-list --count $up..HEAD)"
+> done
+> ```
+> **有本地补丁 → 必须先 rebase 再升**（流程与坑见 本机笔记 `omarchy-plugins.md` §9.3）；无补丁的直接 `merge --ff-only origin/main`。
+
+实现：`/usr/share/omarchy/bin/omarchy-plugin-update`（bash，本机可直读）。每仓库流程 =
+`git fetch --quiet origin HEAD` → 若 `HEAD == FETCH_HEAD` 打印 "up to date" → 否则
+`git merge --ff-only FETCH_HEAD` → 失败即报 `cannot fast-forward '<id>'; you have local changes` 并 `return 1`
+（整批继续，最后 exit 1；成功后 `omarchy-shell shell rescanPlugins`）。
+
+**判据是能不能 fast-forward，不是仓库脏不脏**：
+
+| 本地状态 | 上游有新提交时 |
+|---|---|
+| 工作区改动，且与上游本次改动的文件**不重叠** | ✅ 更新成功，本地改动原样保留 |
+| 工作区改动，且与上游本次改动的文件**重叠** | ❌ 跳过（`local changes would be overwritten`） |
+| 改动**已提交**（本地领先） | ❌ HEAD 不再是上游祖先 → ff 失败，跳过，且会先误导性地打印 "Changes for <id>:"（其实是本地自己的改动） |
+
+- 脚本**没有** stash / reset 兜底（只有 validate 失败时 `reset --hard ORIG_HEAD` 回滚），所以**不存在"更新覆盖你的改动"**。
+- ⚠️ **"Updated" 也会假**（2026-09-15 实测）：本地领先时脚本先打 `Changes for <id>:`（内容其实是**你自己的**改动），
+  再 `merge --ff-only FETCH_HEAD` 得到 git 的 "Already up to date"（exit 0）→ **无条件**打印 `Updated <id>.`。
+  验证真伪**只认 reflog / HEAD**：没有新 reflog 条目 = 什么都没发生（`charlieras262.floating-bar` 就是这样）。
+- ⚠️ **`git reset --hard` 现在是陷阱，别再当"恢复自动更新"的手段用**：本地改动已**提交**进插件仓库，reset 会丢这些提交（reflog 里还能捞，但不值得冒险）。**本机已明确选择"提交制"**：本地改动就留在提交里，上游动了跑 `git rebase origin/master`（流程见 `omarchy-plugins.md` §9.3.1）。
+
+### 诊断命令（别只看 `origin/main`）
+
+`omarchy-plugin-update` 用 `git fetch origin HEAD`，**只写 FETCH_HEAD、不更新 `refs/remotes/origin/*`**
+→ 用 `git rev-list --count HEAD..origin/main` 判断会得到过时/矛盾的结论（本机曾出现 `behind=0` 但
+`ahead=63` 的怪值）。正确做法：
+
+```bash
+cd ~/.config/omarchy/plugins
+# 是否落后？(0 = 已是最新)
+git -C <插件> rev-list --count HEAD..FETCH_HEAD
+# 是否有已提交的本地改动？(>0 = 以后会卡住)
+git -C <插件> rev-list --count FETCH_HEAD..HEAD
+# 最近一次实际拉取成功的时间 (reflog 里的 Fast-forward 条目)
+git -C <插件> reflog --date=iso -5
+```
+
+- 全量体检：`for d in */; do p=${d%/}; [ -d "$p/.git" ] || continue; echo "$p $(git -C "$p" rev-list --count HEAD..FETCH_HEAD) $(git -C "$p" rev-list --count FETCH_HEAD..HEAD)"; done`
+- **2026-09-15 02:17 全量结果**：20 个 git 插件全部落后=0（更新成功）；实际拉到新提交的是
+  `io.github.maajix.spotlight`、`io.github.sirjul1337.lock-explorer`、`meviusisback.ai-subs`；
+  领先 1 的曾有两个（`charlieras262.floating-bar`、`io.github.lijiawei0305-pixel.mihomo`）。
+- **2026-09-15 已清理 `io.github.lijiawei0305-pixel.mihomo`**：两处判空防御（`ProxiesPage.qml`
+  的 `svc` 三层判空 + `MihomoPanel.qml` 的 `serviceFor(...) || null`）已导出为
+（本地笔记存档）（34 行，`git apply` 重打，实测 `--check` 通过），
+  随后 `reset --hard` 回到与上游一致（落后=0 领先=0）→ 可正常接受上游更新。
+  **但同日用户嫌该插件不好用，直接 `omarchy plugin remove` 卸载了**（mihomo 内核本身仍在用，见
+  `ufw-mihomo-tun.md`）→ 该 patch 已无用（已移入（本地笔记存档））。
+- **卸载插件的残留规律**（2026-09-15 两个样本）：顶层 bar 项能清干净（`skoom.beszel` 卸载后
+  `shell.json` 无残留）；但**被嵌在别的 widget 的 `members` 字符串里的 id 清不掉**
+  （`io.github.lijiawei0305-pixel.mihomo` 就留在 `jrmmhm.pocket` 的 members 里，须手工删）。
+- **`charlieras262.floating-bar` 已定案走"提交制"**（2026-09-25）：本机全部改动收在插件仓库**单个** `local:` 提交里（领先 1），刻意不搭补丁文件机制——上游极慢（累计 14 提交、最后 2026-08-27），为它做补丁制属过度工程。未来该提交的 `git rebase` 流程见本机笔记 `omarchy-plugins.md` §9.3.1。
+- **`omarchy.bar`（标准 bar）不私有化**：它在 `/usr/share` 由 `omarchy update` 自动维护、本机零改动；且浮动 bar 就是它的**官方 fork**（`manifest.json` 的 `clonedFrom: omarchy.bar`）→ **合并 omarchy 改动是插件作者的事，不归本机**。留着当参考基线。
+
+## 十一、Beszel 服务器监控插件（已卸载，hub 仍在 Mac mini）
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+
+> ⚠️ **2026-09-15：插件已卸载**——用户觉得用处不大，`omarchy plugin remove skoom.beszel`。
+> 卸载很干净：插件目录、`plugin list`、`shell.json` 均无残留；`bin/beszel-status` 脚本随插件目录一起没了。
+> **凭据与 token 已于 2026-09-15 用 `shred -u` 覆盖删除**（`~/.config/beszel-status/config` 与
+> `~/.cache/omarchy-beszel/token-*`，两个目录一并 `rmdir`），全盘复查已无 beszel 残留。
+> 删除起因：用户"怕不安全"。**日后若重装该插件，凭据需重新 setup。**
+> Mac mini 上的 hub（docker `~/App/beszel/`）**仍在正常使用**——2026-09-15 用户明确：
+> 「我只是不用 beszel omarchy 插件, 部署的应用我还用啊」。**别把插件卸载当弃用**，hub 照旧跑着
+> （同日实测容器 Up），浏览器 `http://<Mac mini 内网 IP>:8090` 一样能看。
+> 以下为插件在世时的资料，留作重装参考。
+
+- 插件 id：`skoom.beszel`（third-party，bar-widget），在 bar 右侧，只显示一个服务器图标（nf-fa-server）。
+- Hub：`http://<Mac mini 内网 IP>:8090` = Mac mini 上的 docker 栈 `~/App/beszel/`（`henrygd/beszel`，compose 里 8090:8090）。**内网明文 HTTP**，仅家中可用。
+- Hub 账号：`<你的 PocketBase 账号>`（PocketBase `users` 集合里的**普通用户**，不是 superuser；插件只认 user 集合，用 superuser 登会失败）。
+- 凭据文件：`~/.config/beszel-status/config`（0600，由插件自带 `setup` 脚本写入，密码不进 `shell.json`）。可选 `label.<server名>=副标题`。
+- 验证命令：`python3 ~/.config/omarchy/plugins/skoom.beszel/bin/beszel-status --check`；JSON 明细去掉 `--check`。
+  - 正常输出形如 `Connected to http://<Mac mini 内网 IP>:8090 — 1/3 up`。
+  - `Not configured` = 缺 url/email/password。
+- 手动刷新：`omarchy-shell skoom.beszel refresh`；开关面板：`omarchy-shell skoom.beszel toggle`。
+- 监控的三个系统：Mac Mini（up）、Tianhe SA、panther（当时 down，<VPN 网段> 网段）。
+- Mac mini 上还有一个 `~/App/beszel/beszel-agent` 二进制，但当前 compose 只跑了 hub 本体。

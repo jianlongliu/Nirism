@@ -2,6 +2,12 @@
 -- o.launch_on_start("my-service")
 o.launch_on_start("activate-linux")
 
+-- org.freedesktop.ScreenSaver shim: turns D-Bus Inhibit() from apps that never
+-- send a wlroots idle inhibitor (OBS recording, windowed mpv) into a real
+-- Hyprland idle inhibitor, so a video/recording doesn't get locked at 20 min.
+-- Dies with the Wayland connection, so a crash can't leave the screen unlocked.
+o.launch_on_start("screensaver-shim")
+
 -- Load hyprpm plugins (scrolloverview, etc.) at startup. hyprpm marks plugins
 -- as "enabled" but they are only injected into Hyprland by `hyprpm reload`,
 -- which must run after the compositor is up. Without this, a reboot leaves the

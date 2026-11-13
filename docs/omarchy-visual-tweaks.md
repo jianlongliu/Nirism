@@ -17,7 +17,7 @@
 - Omarchy `Style`：`barScaleWithFont=true`，`fontScale = base-size/12 = 14/12 ≈ 1.167`，所有 `barToken`/`space` 都乘它。
 - **⚠️ `size-horizontal` 也是 barToken，同样要乘**：40 × 1.167 ≈ **46.7 → bar 实测高 47px**（`hyprctl layers` 量 `omarchy-bar` 的 h）。别把 shell.toml 里的 40 当成 bar 高度。
 - 其它 token 生效值：`iconSlot` 27→**31.5px**（按钮槽）、`iconCanvas` 16→**18.7px**（图标绘制区）。
-- 字体 token（base=14）：`body` 14（clock/media/active-window）· `caption` ≈12 · `Style.bar.iconFont` 13→**≈15.2**（状态图标，同样吃 fontScale）。
+- 字体 token（base=14）：`body` 14（clock/media/active-window）· `caption` ≈12 · `Style.bar.iconFont` 13→**≈15.2**（状态图标，同样吃 fontScale）。派生系数：`body`=base、`caption`=base×0.833、`title`=base×1.167、`heading`=base×1.333；token 值是**逻辑 px**，物理尺寸再乘显示器 scale（本机 1.6）。
 - **禁用魔数**：13/16/18/27/32/`0.68*width` 一律不写，全走 Style token。想整体缩放改 `base-size`，bar 按 `barScaleWithFont` 一起长高。
 
 ### 生效 / 重启 / 回退
@@ -46,7 +46,7 @@
 ### 1.2 图标对齐 / 换图标（历史任务，方法仍适用）
 > **现状（2026-09-11 实测）**：剪贴板 `io.github.majesticio.clipboard-button` 现挂在 **right** 栏（不在左）；`local.opencode-go-usage` 现为 **disabled**（不在 bar）。下方"左侧"是当时的场景描述。
 **需求**：左两用户插件图标（剪贴板、opencode-go）比右侧 tray/mihomo 大、剪贴板不垂直居中，要跟右侧视觉一致。
-**右侧秘密**：外壳 `BarIconButton`（槽 `iconSlot`、图标画在 `iconCanvas`）→ 图标仅 ~18px 非满槽。**正确做法**：直接套 `BarIconButton` + 塞 `iconComponent`，别自制 `Item`+手写宽高。
+**右侧秘密**：外壳 `BarIconButton`（`/usr/share/omarchy/shell/Ui/BarIconButton.qml`；槽 `iconSlot`、图标画在 `iconCanvas`、光学居中）→ 图标仅 ~18px 非满槽。**正确做法**：直接套 `BarIconButton` + 塞 `iconComponent`，别自制 `Item`+手写宽高。
 - 白/单色 SVG：`iconComponent` 里包 `Item+Image+MultiEffect`，`colorizationColor = bar.barForeground` 随主题变色。**源 SVG 本身必须是白的**（`colorization` 按亮度相乘，有色的源会偏暗）——完整做法与两个坑见 §4.1。
 - 删 `fixedHeight: Style.bar.iconSlot`（高度跟 barSize）；槽宽用 `iconSlot`，别 `Style.space(32)`。
 - 改的文件：`io.github.majesticio.clipboard-button/BarWidget.qml`、`local.opencode-go-usage/Panel.qml`。
@@ -83,13 +83,17 @@
 |---|---|
 | 字体 | `~/.local/share/fonts/GoogleSansCodeMaterial-Regular.ttf`（族名 `GoogleSansCode Material`） |
 | 别名 | `~/.config/fontconfig/fonts.conf` 的 `prepend_first` 一行 |
-| 换掉 | 140 个（映射表见 `tmp-material-bar-icons/nerd_to_material.py`） |
-| 保留 Nerd | 17 个品牌图标（apple / google / discord / arch / docker … Material 无对应 logo） |
+| 换掉 | 140 个（映射表见 `tmp-material-bar-icons/nerd_to_material.py`）；另有 109 个非 MDI 码位本就不动 |
+| 保留 Nerd | 17 个品牌图标（apple / google / google_chrome / microsoft / microsoft_edge / microsoft_xbox_controller / discord / spotify / minecraft / linux / arch / bash / docker / onepassword / dev_to / language_ruby_on_rails / space_invaders；Material 无对应 logo） |
 | 效果 | ASCII 逐像素不变，只有图标字形变；尺寸中位 1.15× |
 
 - **⚠️ 观感预期**：**bar 上几乎看不出变化**——只有 4 个图标走字体（蓝牙 0.84 / 音量 0.85 新旧几乎一样，wifi 0.50 / 显示器 0.60），且只有 24 物理 px。菜单换了 39%（174 个码位里 68 个），但菜单是弹一下就走的面板。**这次迁移的价值是血统统一 / 可维护性，不是换脸**；真正解决「图标有大有小」的是换成**非 Mono 变体**那一步，跟 Material 无关。
 - **为什么看着差不多**：Nerd 的 `md-*` 就是 Material Design Icons，Material Symbols 是它的后继，同源设计 → 大部分图标几乎一样。全量 140 个的 IoU 中位 0.53，但要看出差别得逐个放大比。
-- **坑**：① `getBestCmap()` 改了不写回，必须遍历 `font["cmap"].tables` 改 `table.cmap[cp]`；② 多个 Nerd 名共用一个 Material 名（`image`/`image_move`）会互相覆盖，字形名要带码位；③ 尺寸参照用**原字形包围盒**，不能用单元格宽（Nerd 字形本就溢出）。
+- **坑**：① `getBestCmap()` 改了不写回，必须遍历 `font["cmap"].tables` 改 `table.cmap[cp]`；② 多个 Nerd 名共用一个 Material 名（`image`/`image_move`）会互相覆盖，字形名要带码位；③ 尺寸参照用**原字形包围盒**，不能用单元格宽（Nerd 字形本就溢出）；④ `varLib.instancer` 只钉部分轴会残留 `gvar`（fontTools 抛无信息的 `AssertionError`），`FILL=1` 把描边变实心块**别用**，加粗走 `GRAD`。
+- **字形落位**：每个字形等比缩放进**原 Nerd 字形包围盒 ×1.15** → 墨迹中心对齐 → **步进保持 1200**（等宽排版不破）；ASCII/CJK/GSUB 原样保留。
+- **OSD 不受影响**：`OpsModel`/OSD 仍消费 Nerd 码位、走自己的映射，替身字体法**不碰 OSD 路径**。
+- **`shell.toml` 的 `[bar]` 只认 `scale-with-font`/`size-horizontal`/`size-vertical`**（`Style.qml:409`）；`icon-font`/`icon-canvas` 存在但**不可配置**。
+- **想看出变化别指望换图标集**：杠杆是**尺寸与字重**（`k=1.15`、`GRAD`/`wght`），不是图标集——Nerd 的 `md-*` 本就是 Material 系设计。
 - 完整流程 / 量化方法 / 回退见 `tmp-material-bar-icons/README.md`（**临时稿**，用户暂定不并入本文）。
 
 > 早期「克隆 4 个面板 + 覆盖 `fontFamily` + 连字名」的路线已废弃（改动仍在 `~/.config/omarchy/plugins/jianlongliu.{bluetooth,network,audio,monitor}`，但 shell.json 已切回出厂 `omarchy.*`、克隆全部 disable，可直接 remove）。
@@ -105,6 +109,8 @@
 > 最后核对：2026-09-16 · Omarchy 4.0.4
 
 **现状**：`gsettings get org.gnome.desktop.interface icon-theme` = **`MacTahoe`**（用户级 `~/.local/share/icons/MacTahoe{,-light,-dark}`，只服务 **Arc Dock + Nautilus**）。
+
+**装法（用户级，不用 root）**：`git clone --depth 1 https://github.com/vinceliuice/MacTahoe-icon-theme /tmp/...` → `./install.sh -d ~/.local/share/icons -t default`（生成 `MacTahoe` / `MacTahoe-light` / `MacTahoe-dark` 三套，1394 个 app 图标）。不用 AUR `mactahoe-icon-theme-git`——它装进 `/usr/share/icons` 且强制 `-t all`（27 套），没必要。**回退**：`rm -rf ~/.local/share/icons/MacTahoe*` + `gsettings set … icon-theme Yaru-purple`。
 
 **为什么一条 gsettings 能同时管两者**：
 
@@ -128,12 +134,19 @@
 | `colamd.png` | 新增 | 自建 desktop 条目（`Icon=colamd`）在 hicolor 里有图但 dock 查不到 |
 | `qq.png` | 换官方彩色企鹅，**移除同目录 `qq.svg`** | MacTahoe 的 `qq.svg` 是「企鹅画在**近白圆角板**上」= macOS 原版：实测该区域 **29.8% 像素 ≥240**（同尺寸 VS Code 0%、Zen 6%）→ 深色 dock 上看着"过曝"；换后 **11.2%**、区均值 168 → 94.5 |
 
+**dock 启动按钮图标解析**：Arc Dock 的启动按钮只认 4 个图标名，顺序 `omarchy` → `view-app-grid` → `applications-all` → `start-here`（`launcherIcon` 只有 `system`/`theme` 两个值，**无自定义路径**）。`system` 走 `omarchy`，且 `launcherPlate = (name === "omarchy")` 时 dock 会**自画一块主题色小板子**垫在图标后面（板色 = 主题 `Color.popups.background`）。
+
+- 想要 Arch A：把**白色 `#ffffff`** 的 A 放到 `~/.local/share/icons/{MacTahoe,MacTahoe-light,MacTahoe-dark}/apps/scalable/omarchy.svg` → `omarchy restart shell`。⚠️ 白色 A 只在板子是**深色**时可见，主题/`dockTheme` 转浅要换回品牌蓝 `#1793D1`。
+- 想要「整块 macOS 圆角图标」：用主题自带 `distributor-logo-arch.svg` 顶掉 `view-app-grid`，并把 `~/.config/omarchy/arc-dock.json` 的 `launcherIcon` 设成 `"theme"`。
+- `omarchy` / `view-app-grid` 这两个名字全系统只有 dock 启动按钮在用（bar 系统菜单按钮走 Nerd 字体字形），顶掉无副作用；**重装图标主题会被还原，需重 cp**。
+- **macOS 27（Golden Gate）暂无可用图标主题**：AUR 无包、GitHub 只有无 license 的 WIP 包 → 别再找，等上游。
+
 > **判"某枚图标过曝"的方法**：量该图标区域里灰度 **≥240** 的像素占比（`grim` 抓 dock → `magick … -crop … -colorspace Gray -depth 8 gray:-` → 计数）。占比远高于旁边图标 = **图标自身底板就是亮的**，不是渲染问题，换掉那枚图标即可。原 `qq.svg` 备份在 `~/.local/share/mactahoe-icon-overrides-backup/`。
 
 **dock 图标锯齿（细白线图标最明显，如 Zen 的同心环）**：图标取图尺寸 = `显示尺寸 × magnifyScale × DPR`。本机 `~/.config/omarchy/arc-dock.json` 的 `magnifyScale = 200` → 取 **166px** 却只显示在 **83px** 上 = **2 倍缩小**，双线性缩小把 SVG 的抗锯齿丢掉了。
 **修法**：`plugins/io.github.claudsondouglas.arcdock/ArcSlot.qml` 里图标 `Image`（约 388 行）加 **`mipmap: true`** —— 本地补丁，见 `omarchy-plugins.md` §8.1。⚠️ 只在 ≥2 倍缩小（`magnifyScale > 150`）时才生效，≤150 时等于没加。
 
-**过曝嫌疑（非渲染）**：`glassOpacity` 只有 20%（Background 段可调）时玻璃极透，背后亮内容会把整条 dock 洗白；作者的官方预览是在**空工作区 + 深色壁纸**上抓的（`docs/preview.sh`，会临时开 `printMode`、切空工作区、抓完自动还原；注意它是按**逻辑坐标**抓 → 本机 1200x500 会得到 1920x800）。
+**过曝嫌疑（非渲染）**：`glassOpacity` 只有 20%（Background 段可调）时玻璃极透，背后亮内容会把整条 dock 洗白；作者的官方预览是在**空工作区 + 深色壁纸**上抓的（`docs/preview.sh`，会临时开 `printMode`、切空工作区、抓完自动还原；注意它是按**逻辑坐标**抓 → 本机 1200x500 会得到 1920x800）。**若仍看着发白**：截图永远是面板前的像素，拍不出**显示器侧锐化/亮度/对比**的加工 → 判别法 = 把 `grim` 导出的放大图拿到另一块屏/手机上看，那边正常即面板的锅。
 
 **验证法**：
 ```bash
@@ -218,6 +231,7 @@ PanelWindow {
 - **玻璃透明度**：6 个 alpha 相互独立，**只能逐个改**，改完 `omarchy restart shell`（`[menu]` 段是共享的：clipboard / emojis / reminders 一起变）。
 - **模糊强度 / 开关**：只改 `looknfeel.lua` 基础块 + `hyprctl reload`。
 - **主题色、边框色**：不用改任何东西（matugen 派生）。
+- **待做的单源化（未实施）**：方案名 `visual-sync` —— 一个 tokens 文件 + 一个 sync 脚本 + hook 挂 `theme-set`/`post-update`，把散在多处的同类值收成一份真源；未实施前按上面的同步清单手工对齐，保持「一改其他也都跟着改」。
 
 ### 3.1 工作区指示器：GNOME 胶囊（jianlongliu.workspaces）
 **目标**：嵌在顶栏内的纯圆点胶囊——当前轻微拉长、其余小圆点，无数字/无边框/无厚重背景。同色**单前景**，靠 alpha 明暗分级（不搞多彩，用户嫌花哨）。
@@ -239,6 +253,10 @@ PanelWindow {
 **踩过的坑**：①必须撑满 bar 高才垂直居中 ②尺寸 0.14 太细/0.48 太大/**0.28 最终** ③用前景 alpha 别用 `Color.accent`（会蓝/彩） ④无数字无外框 ⑤点击静默无 hover 放大 ⑥**槽位别用固定填充**（见下「槽位规则」） ⑦**尾部留白要动态补**（见下「间距规则」）。
 **过冲回弹体感 ≈ 0**：13px 点 + 220ms 里那点 OutBack 过冲，肉眼几乎感知不到——同形态的视觉/动画天花板很低。**要更明显的"活"须换形态**（如悬停浮卡），不在点里继续调。
 **GNOME 标准已回退**：GNOME 未选中缩放 0.75×、当前满尺寸 → 大小不一破坏统一，仅借用紧凑点距(`dot*0.5`≈6.5 逻辑px；GNOME 固定 5px 不随 bar 缩放)。
+
+**形态结论（别再推的方向）**：纯平胶囊已定稿 → **别再推渐变/阴影/立体形态，也别做低对比度 alpha 微调**（同色弱对比会被无视）。想「更精致/更活」只往**明显对比**或**换形态**（悬停浮卡）走，且改动前先看效果图再改，别盲改。
+
+**公开仓库（保留 GitHub、不发布插件市场）**：`github.com/jianlongliu/omarchy-workspace-pill`（id `jianlongliu.workspace-pill`，源码 `~/Work/omarchy-workspace-pill`）。⚠️ **发布版是旧原始版**（仅 `@34`/`@85` 两色、无分级无 hover）；本地 bar 用的是开发克隆 `jianlongliu.workspaces`（最新定稿）——两者 id 独立并存，同步发布版需手动补到最新。
 
 **调参表**：圆点 `dot`(0.28×，下限 7px) · 拉长 `expanded`(2.6×) · 间距 `spacing`(0.5×) · 空 `@0.15` · 占用 `@0.62` · 当前 `@0.9`(悬停`@1.0`) · 非当前悬停 `@0.85` · 宽动画 OutBack 220ms(over 1.2) · 色动画 160ms · 尾部留白 `Style.space(8)`≈9px（仅无标题时）。
 
@@ -292,6 +310,8 @@ hl.layer_rule({ match = { namespace = "omarchy-bar" }, blur = true, blur_popups 
 - 在 `shell.json` `bar.layout.center` 数组、两 widget 之间插 `{"id":"omarchy.spacer","size":16}`（`size`=px，默认 12，见 `/usr/share/omarchy/shell/plugins/bar/widgets/Spacer.qml`），改完 `omarchy restart shell`。想留 0 宽占位填 0。
 - **这是 per-位置 手动方案**，不是全局统一间距。
 - 若想**在插件里自己控制**尾部留白（动态、条件式），见 §3.1「间距规则」——工作区胶囊就是那么做的，可作为范式。
+- **bar widget 没有折叠/抽屉概念**：要么在栏上、要么不在；`tray` 的 `pinned`/`hidden` 只管托盘图标。要隐藏某个 bar widget 只能从 `shell.json` 的 bar 布局里删条目（`omarchy bar put/remove` 或直接编辑 `layout`）。
+- **`centerAnchor` = 把该 widget 的正中心钉在整条 bar 正中**（`Bar.qml` `anchors.centerIn: parent`）；center 区其它 widget 只挂在它左右，所以簇可能不对称显得偏，但被锚定的那个（如 `omarchy.clock`）本身一定居中。克隆后该字段不会自动改名，需手动同步（见 §〇）。
 
 ### 3.3 磨砂玻璃（Liquid Glass）恢复手册
 > 状态栏/菜单/通知/OSD 所有表面的磨砂 = **三层叠加，全部无需 root**：① 全局 `decoration:blur`（`~/.config/hypr/looknfeel.lua`）② 每个 shell 层的 `layer_rule`（`~/.config/hypr/apps/omarchy-shell.lua`，按命名空间开 blur + 用 `ignore_alpha` 阈值只糊卡片）③ 表面自身的 alpha（用户级 `~/.config/omarchy/shell.toml` 的 `background-alpha`）。被 `omarchy update` / `omarchy refresh hyprland` 覆盖则按此恢复。
@@ -483,6 +503,15 @@ o.window("^(org\\.omarchy\\.btop|org\\.omarchy\\.yazi)$", {
 
 > 完整上下文（快捷键、TUI 助手行为、验证脚本）见 `omarchy-function-tweaks.md` §3.5。
 
+### 3.6 Gum confirm 选中态配色（omarchy update 的 Yes/No）
+`omarchy update` 的 `gum confirm` 选中项看不清：主题（Catppuccin Mocha）由 `gum_env.lua` 把 `GUM_CONFIRM_SELECTED_*` 与 `UNSELECTED_*` 的**前景色都设成 `#cdd6f4`**，只靠背景 `#45475a`(选中) vs `#1e1e2e`(未选中) 区分；Ghostty 开透明+模糊后那块暗底被壁纸糊掉 → 分不清选中的是哪个。`gum confirm` **没有加粗项**，只能靠颜色。
+
+**修法**：用户级 override 放在 `~/.config/hypr/hyprland.lua`（`require("default.hypr.omarchy")` **之后**，后写覆盖主题的 `gum_env`）：
+```lua
+hl.env("GUM_CONFIRM_SELECTED_FOREGROUND", "#a6e3a1")
+```
+文字色不受透明/模糊影响，最可靠。**⚠️ 环境变量只在进程启动时注入 → 必须开新 Ghostty 窗口才生效**，旧窗口不变。验证：`GUM_CONFIRM_SELECTED_FOREGROUND=#a6e3a1 gum confirm "test?"`，绿色即选中。
+
 ---
 
 ## 四、bar 左上角 logo / 锁屏头像
@@ -540,7 +569,7 @@ magick compare -metric AE /tmp/closed.png /tmp/opened.png null:  # 差异应为�
 cp ~/.config/omarchy/avatar_circle.png ~/.config/omarchy/lock-avatar.png
 omarchy restart shell
 ```
-预览：`omarchy-shell lock previewDesign split`；交互选择 `omarchy-shell lock pickAvatar`（锁屏无键盘，仍推荐探测路径法）。
+预览：`omarchy-shell lock previewDesign split`；交互选择 `omarchy-shell lock pickAvatar`（锁屏无键盘，仍推荐探测路径法）。交互选择会把路径写进 `shell.json` 该插件 entry 的 `avatar` 字段（`"none"` = 清空、回落首字母）。
 
 **回退**：删 `~/.config/omarchy/lock-avatar.png` 再 `omarchy restart shell`（自动回退首字母），或 `omarchy-shell lock setDesign card` 换设计。
 
@@ -565,6 +594,8 @@ magick ~/.config/omarchy/avatar_circle.png -format "%[pixel:p{2,2}] %[pixel:p{25
 # 期望 → srgba(0,0,0,0) srgba(...,1)   （角透明、心不透明，证明是圆形）
 ```
 换头像：换 `avatar_circle.png` → 重新 `cp` 成 `lock-avatar.png`。
+
+**公开副本**：头像样例已收录进公开仓库 `github.com/jianlongliu/Nirism`（2026-09-28 前叫 `omarchy-like-niri`）的 `omarchy/lock-avatar.png`。根级 `.gitignore` 的 `avatar*.png` 规则**不匹配** `lock-avatar*`，故可直接入库；但仍排除 `**/avatar*.png` / `**/avatar_circle.png` / `**/backgrounds/`（私人素材不进公开库）。
 
 **坑**：①`Rectangle.clip` 不按 radius 裁圆（裁成方形）②`MultiEffect` mask 读不到、也不裁圆 ③keepLoaded 组件改后必须 `omarchy restart shell`，热重载不生效。
 
@@ -617,11 +648,12 @@ Rectangle { anchors.fill: parent; color: "#1e1e2e"; opacity: 0.45 }  // 遮罩�
 
 ## 七、动态取色主题：matugen M3（tonal-spot / expressive）
 **目标**：从当前壁纸取 Material 3 动态色,自动套到窗口边框/状态栏/全部 Quickshell 毛玻璃面/终端文本;换壁纸或登录自动重取色。做成两套主题。**只改颜色**,不碰毛玻璃 layer rules/ignore_alpha(正交)。
-**默认取向**：**tonal-spot**(沉稳,primary 与 surface 同冷暖)。expressive 会把 primary 大转色相与 surface 撕裂,铺大色块刺眼,只作可选。锁 **dark** 模式。ANSI 16 色保留 catppuccin 静态(可读性优先)。
+**默认取向**：**tonal-spot**(沉稳,primary 与 surface 同冷暖)。expressive 会把 primary 大转色相与 surface 撕裂,铺大色块刺眼,只作可选（实测 `scheme-expressive` 把 primary 大幅转相：蓝→黄绿 hue≈94°、粉→青 hue≈200°；它在 Android 上协调是因为 primary 只铺小元素，铺到窗口边框/大毛玻璃面即刺眼）。锁 **dark** 模式。ANSI 16 色保留 catppuccin 静态(可读性优先)。
 **颜色流**：主题 colors.toml → `/usr/share/omarchy/default/themed/*.tpl` → 生成 hyprland.lua(边框)/shell.toml(毛玻璃面)。**只需 matugen 写一套 colors.toml,再 `omarchy theme refresh` 触发模板重渲**。
 **M3→colors.toml 映射**（输入就 20 键）:accent←primary、selection←primary_container、muted←on_surface_variant、background←surface、foreground←on_surface、red+ANSI 保留 catppuccin 原值。派生键(background_rgb/*_strip/selection_*/theme_type)由这些生成;foot 用 `purple_strip`,catppuccin 无 purple,由 magenta 派生。
 **主题结构**：`~/.config/omarchy/themes/{tonal-spot,expressive}/` 各含 `colors.toml`(matugen 生成)+ `matugen.toml`(meta scheme/mode)。fork catppuccin,激活 `omarchy theme set Tonal-Spot`。⚠️ 目录名须小写 slug 否则 `theme set` 归一后找不到。
-**触发**：幂等脚本 `~/.local/bin/materal-update`（读激活主题→matugen 取色→临时写→校验→替换→留备份→apply）。apply 用 `OMARCHY_THEME_SKIP_BACKGROUND=1 omarchy-theme-set <slug>`(=refresh,**不轮换壁纸**),设 guard 防死循环。三处触发:
+**触发**：幂等脚本 `~/.local/bin/materal-update`（读激活主题→matugen 取色→临时写→校验→与现有 `colors.toml` 相同则直接退出→替换→留备份→apply）。apply 用 `MATERAL_INTERNAL_APPLY=1 OMARCHY_THEME_SKIP_BACKGROUND=1 omarchy-theme-set <slug>`(=refresh,**不轮换壁纸**)。
+**递归守卫（关键）**：必须靠环境变量 `MATERAL_INTERNAL_APPLY=1`。`omarchy-theme-set` 在非 TTY 下把 theme-set 钩子丢进 detached 后台批次（`/usr/share/omarchy/bin/omarchy-theme-set:628-630`），钩子真正执行时 `materal-update` 早已退出、文件 guard 已删，单靠 guard 文件挡不住递归 → 每次 apply 经钩子再触发 `materal-update`，无限重设主题；`omarchy-restart-terminal` 随之每秒给 ghostty 发 SIGUSR2，终端持续打印 `reloaded the configuration`。文件 guard 改为写 PID，仅作兜底；属主进程已死时钩子自动清理。三处触发:
 1. systemd 用户服务 `matugen-theme.service`(启动取一次+inotify 循环)
 2. 换壁纸:`inotifywait` 盯 `current/` 目录、匹配 background 文件、300-500ms 去抖
 3. 换主题:`~/.config/omarchy/hooks/theme-set.d/` 钩子
@@ -970,6 +1002,8 @@ text-scaling-factor 1.1667 → gtk-xft-dpi = 114690/1024 = 112 dpi (= 96 × 1.16
 - **连带影响**（`font-name` 是**系统级接口字体**）：**Ghostty 右键菜单**、**Firefox / Zen 的 chrome**（标签栏/地址栏/菜单）**一起变小**。
 - **持久**：`omarchy-font-set` 只管**等宽字体族**（写 fontconfig + alacritty/kitty/ghostty/foot），**不碰 `font-name`** → 不会被覆盖。
 - **DPI 本身不用动**：Hyprland `scale=1.6` + `gtk-xft-dpi=112`，且**无** `GDK_SCALE`/`GDK_DPI_SCALE`（确认无双重缩放）。
+- **字体来源**：AUR `otf-apple-sf-pro` 装入 `/usr/share/fonts/OTF/`，`pacman -S/-R` 可管理；构建依赖 `p7zip` + `lcdf-typetools`（`otfinfo` 来自后者，非 texlive）。
+- **边界（别越线）**：**不动系统 DPI / monitor scale**（保持 Hyprland `scale=1.6`、`scaling-factor 0`）；统一 GTK 字体只走 `font-name` / `text-scaling-factor` 这两枚，别碰 display scale。
 
 ### 10.6 GTK3 应用：已处理（必须走显式选择器）
 
@@ -1039,7 +1073,7 @@ magick out.png -crop <区域> +repage -colors 3 -format %c histogram:info: | sor
 ```bash
 XDG_CONFIG_HOME=/tmp/try env -u GTK_THEME python3 rig.py
 ```
-**`env -u GTK_THEME` 不可省**——否则测不出任何 `@define-color` 效果（见 10.2）。
+**`env -u GTK_THEME` 不可省**——否则测不出任何 `@define-color` 效果（见 10.2）。⚠️ `XDG_CONFIG_HOME` 隔离**只对 GTK4 有效**；GTK3 读死 `~/.config/gtk-3.0/gtk.css`，隔离无效（见 §10.6）。
 
 **⑤ 测试对象取舍**：
 | 对象 | 说明 |
@@ -1051,6 +1085,251 @@ XDG_CONFIG_HOME=/tmp/try env -u GTK_THEME python3 rig.py
 
 ---
 
+
+## 十一、字体链：终端 vs fontconfig/bar
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+
+### 现状（截至 2026-09-11）
+| 位置 | 字体 | 怎么设的 |
+|---|---|---|
+| 终端 ghostty / kitty / alacritty | `GoogleSansCode Nerd Font Mono` | 用户经菜单 Style>Font 设，sed 写死 |
+| bar / 正文（解析 `monospace`） | 同上是 GoogleSansCode（解析到 NFM） | `~/.config/fontconfig/fonts.conf` |
+| GTK 界面 / 文档 | `SF Pro 12` / `Adwaita Sans 12` | gsettings |
+| sans-serif / serif | Liberation Sans / Serif | `/etc/fonts/conf.d/50-omarchy.conf` |
+| 中文 | **`Noto Sans Mono CJK JP`（日文变体！）** | ghostty 的 CJK 回退；**并非苹方** |
+
+**这是用户主动选择（自己点的菜单），别当误配改回 JBM。**
+
+### ⚠️ CJK 回退落到日文字形（2026-09-11 实证）
+- **决定性工具：`ghostty +show-face --string="中文"`**（`--cp=0x4e2d` 也行）——直接问 ghostty 某码位用哪个 face；`+list-fonts` 做不到这件事。注意 `--string` 必须用 `=` 形式。
+- 实测：`中/文/测/试/直/骨` 全部落在 **`Noto Sans Mono CJK JP`**，**不是苹方**。**换回 JBM 也一样（JP）→ 历史遗留，非换字体引入。**
+- 根因：终端请求等宽（spacing=100）→ fontconfig 优先挑**等宽 CJK** 而非比例的 PingFang SC；pattern 不带 lang → 在 JP/KR/SC/TC 里挑到 **JP**（`fc-match` 裸查会给 KR，ghostty 给 JP，两者不一致）。
+- 修法（各自用 `XDG_CONFIG_HOME=/tmp/xxx` 隔离验证过，均生效）：ghostty 加第二行 `font-family`（**ghostty 支持重复写 `font-family` 组成回退链**）：
+  - `font-family = "Noto Sans Mono CJK SC"` → 中文字形且**保持等宽**（终端对齐更好，推荐）
+  - `font-family = "PingFang SC"` → 回归苹方，但是比例字体
+- **旧记忆「ghostty CJK 自动 fallback 到 PingFang SC」是错的**，已推翻；苹方只在**比例**请求下胜出。
+- **2026-09-11 已采用的修法**：`~/.config/ghostty/config` 写两条 `font-family` —— 第 1 条 `GoogleSansCode Nerd Font Mono`（西文）、第 2 条 `Noto Sans Mono CJK SC`（中文）。理由：**「Google Sans 简体中文」不存在**（Google Sans/Code/Flex 全家族实测无 CJK 字形），Google 自家中文搭配就是 Noto Sans CJK SC（Pixel 用的也是它）。
+- **⚠️ 别混淆两个"没有"**：**`Google Sans` 家族确实无中文**（实测 Google Sans / Code / Flex 均无 CJK 字形）；但 **`Noto Sans SC` 存在**，Google Fonts 上的显示名叫 **"Noto Sans Simplified Chinese"**（OFL，可变字体，`wght` 100–900；METADATA.pb 里 `source.repository_url = notofonts/noto-cjk`、版权归 Adobe Source Han）——**与 Arch 已装的 `Noto Sans CJK SC` 是同一设计、同一上游，只是打包/族名不同**（Google Fonts 按语言切可变字体；Arch `noto-fonts-cjk` 是 `/usr/share/fonts/noto-cjk/NotoSansCJK-*.ttc` 静态字重）。终端用它的**等宽切** `Noto Sans Mono CJK SC`；比例版 `Noto Sans SC / CJK SC` 会破坏终端对齐。
+- **`Noto Sans SC` 这个族名本机不可解析（2026-09-11 实测）**：`fc-match 'Noto Sans SC'` → Liberation Sans；ghostty 里写 `font-family = "Noto Sans SC"` → 中文掉回 `Noto Sans Mono CJK JP`、西文掉回 Liberation Sans。要这个名字能用，唯一办法是装 Google Fonts 那份。
+- 查 Google Fonts 有没有某字体：`curl -s https://fonts.google.com/metadata/fonts` 拿 JSON（含 1900+ 族名与 axes），页面本身是 JS 渲染、WebFetch 拿不到内容。
+- 验证（不重启、不碰真进程）：`cp` 真配置到 `/tmp/x/ghostty/config` 后 `XDG_CONFIG_HOME=/tmp/x ghostty +show-face --string="中文"`。
+- **⚠️ 坑：`omarchy-font-set` 用 `sed -i "s/font-family = \".*\"/…/g"`（正则带 `g`）→ 下次从菜单换字体，会把这两条 `font-family` 回退链一并刷成同一个字体名，手写的中文回退行会丢**（中文又回日文变体）。用菜单换过字体后记得检查/补回。
+
+
+### 两套字体机制必须分清
+- **终端**：`omarchy-font-set` 用 sed 把族名**写死**进 ghostty/kitty/alacritty 配置，直接点名、**不经 `monospace` 别名**。终端永远跟着菜单走。
+- **bar / 正文**：`Style.qml` hardcode `fontFamily:"monospace"`（`/usr/share/omarchy/shell/Commons/Style.qml`；shell.toml 读不了 family，`parseInt` 跳过非数值；改系统 qml 会被 update 还原）→ 走 fontconfig 别名链。
+- 所以「换字体」菜单会同时动这两处，但机制独立，别混着排查。
+
+### fontconfig 关键机制（踩过的坑）
+- `/etc/fonts/conf.d/50-omarchy.conf` 把 `monospace`/`sans-serif`/`serif` 用 **`assign` + `binding=strong`** 换掉。用户级要反制必须**晚于它加载**：用户 `conf.d` 经 `/etc/fonts/conf.d/50-user.conf`（`<include prefix="xdg">`）加载。
+- **⚠️ `mode` 决定生效与否（2026-09-11 隔离测试实证，别再记成"用户级规则一律无效"）**，`man fonts-conf`：
+  - `prepend` = 插到「被匹配值」**之前** → 因为 `assign` 已把 monospace 换成 JBM，pattern 里没有 monospace 了，**匹配不上 = 空转**。
+  - `prepend_first` = 插到**列表头** → **生效**。`omarchy-font-set` 写的 `fonts.conf` 用的就是它，所以菜单**真的会改全局 monospace**。
+- `fonts.conf` 会被 `omarchy font set` **整文件覆写**（`cat >`）→ 别把长期自定义放里面，放 `conf.d/`（不被覆写）。
+- **`omarchy font list` 用 `fc-list :spacing=100` 只筛等宽**：带 CJK 的等宽报 `spacing=90`(dual) **被过滤，列表里永远看不到**（实例 `Maple Mono Normal NL NF CN`）。辨名用 `fc-list : family | grep -i`。`font set` 只做 `fc-list | grep -Fqi` 校验，故正确族名照样能设。
+- 菜单 Style>Font 是 **`volatile` 动态生成**（`Menu.qml:270`，provider `fonts` → `omarchy-font-list`），装了新等宽字体**开一次菜单即可见**，不必重启 shell。
+- **菜单只出等宽字体**：比例字体（Google Sans / Roboto）永远进不去，且菜单里**没有"界面字体"项**。界面字体只能 `gsettings set org.gnome.desktop.interface font-name`。
+
+### 验证手段（重要）
+- **隔离测试 fontconfig 因果，不碰真配置**：
+  `XDG_CONFIG_HOME=/tmp/fctest fc-match monospace`，待测规则丢进 `/tmp/fctest/fontconfig/conf.d/51-t.conf`。因为 `50-user.conf` 用 `prefix="xdg"`，临时 XDG 目录能整套替换用户层。比"改真文件+猜"可靠得多。
+- 别靠 OCR 中文截图判断字体（tesseract 本机只有 `eng`/`osd`）。终端本身就是容器：`printf` 一段文字丢进 ghostty 截图自证。
+
+### 已废弃（存档，别再复活）
+- `~/.config/fontconfig/conf.d/51-omarchy-body-fallback.conf`：2026-09-08 想做「SF Mono Powerline → PingFang SC → JBM 兜底」的 macOS 观感 bar 链。**2026-09-11 用户决定删除**——它用的 `mode="prepend"` 一直空转，从未生效。回退文件留在同目录 `…conf.bak.1788803869`（旧版，多一条拦 JBM）。
+- `otf-sfmono-patched`（AUR，14.96 MiB，12 个 otf）仍装着，是 Apple SF Mono 的 Powerline 补丁版，族名 `SF Mono Powerline`（带后缀；`fc-match "SF Mono"` 会落回 SF Pro）。**2026-09-11 核查：已无任何活配置引用它**（只剩 `.bak` 与浏览器缓存里的字符串），即从未真正被用上。
+  - 字形实查（`fc-query -f '%{charset}'`）：**有** Powerline `e0a0-e0a2 / e0b0-e0b3`、**有** Material Design Icons 段 `f500-fd46`；**缺** Font Awesome 等 `f000-f4ff`（如 `U+F07B` 文件夹图标）。别再说"完全无 Nerd 图标"。
+  - 框线 `┌─┐│└┘├┤┬┴┼╭╮╰╯` 齐全（仅 Italic 缺）→「SF Mono 缺框线」这个理由已证伪。
+- 「SF Mono 缺框线 `╭╮╰╯`」这个当理由**已证伪**：Regular/Bold/Medium/Semibold 都含框线，只有 Italic 缺。
+- **Omarchy `install font` 通道装不了 SF Mono**——它只装 Nerd Font 包。
+- 曾把 ghostty 西文设成 SF Mono，用户嫌「太齐、间隙大、难受」否回——**别再提议**。
+
+完整文档：（本地笔记存档） §八；**单应用定制总表 + Discord 那套的完整写法见（本地笔记存档）（§一手段 / §二 Discord / §六验证手法）**。
+
+### Electron/Chromium 的中文曾掉进等宽 Maple（2026-09-17 已修）
+- **症状**：Discord 等 Electron 应用中文「字缝很大、间距怪」；字身大小正常但每字进格比别人宽一倍不到。
+- **根因**：Chromium 补缺字是**按单字**查 fontconfig、pattern 上既无 `lang` 也无 CJK 族名 → fontconfig 只能裸 charset 扫描 → 本机扫出 **`Maple Mono Normal NL NF CN`**（等宽 CJK：字身 0.94em 却按 **1.2em** 进格）。`fc-match ":charset=641c"` 直接复现。**注意 `fc-match "sans-serif:charset=641c"` 给的是 PingFang，所以别用带族名的查询去判断这条路径**。
+- **诊断手法（可复用）**：`grim` 截图 → `magick -crop … -colorspace gray -depth 8 x.pgm` → 量「字身宽 / 字距」比值（脚本见（本地笔记存档））：PingFang=0.88、Maple=0.73。**headless Chromium 是完美的复现台**：`chromium --headless=new --screenshot … file:///tmp/t.html`，字体栈里写 default / sans-serif / monospace 三行一起量（修复前三行**全**是 Maple）。
+- **修法（用户 2026-09-17 选定：只改 Discord，不动全局）**：
+  1. `~/.config/fontconfig/discord-only-cjk.conf` —— **故意不放 conf.d**（放那儿就全局生效）。内容 = `<include>/etc/fonts/fonts.conf</include>` + 无 test 的 `mode="append" binding="strong"` 加 `PingFang SC`。原理：append 排在 app 点名的族之后、charset 命中优先于族名命中 → 只接住「没有任何族覆盖该码点」的情况；显式姓名的族照样赢。
+  2. `~/.local/bin/discord-cjk` —— `export FONTCONFIG_FILE=…; exec /usr/bin/discord "$@"`。
+  3. `~/.local/share/applications/discord.desktop` —— 抄 `/usr/share/applications/discord.desktop`，只把 Exec 改成 wrapper（系统那份 root 只读，用户级同名覆盖）。
+- **A/B 实测（唯一可信的验证法）**：看 **renderer 进程 mmap 的字体**（`/proc/<renderer>/map_files`，找 `type=renderer` 且 cmdline 含 `config/discord`）：走 wrapper → `PingFangSC-Regular.otf`；直接 `/usr/bin/discord` → `MapleMonoNormalNL-NF-NF-CN-Regular.ttf`。像素法同向：字身/字距 0.88 vs 0.73。
+- **⚠️ 别信 `/proc/<pid>/environ` 判断这个 wrapper 是否生效**：Discord 的 host shim（`~/.config/discord/Discord`）给 app 的进程环境对不上（实测同一实例里 crashpad 有 `FONTCONFIG_FILE`、main/renderer 读不到，但 renderer 明明已按该配置渲染）。**只认 mmap + 像素**。
+- **代价（用户已知并接受）**：只能从桌面入口进；哪天 Discord 不经这个入口自起（旧书签/自更新另起的进程）就会退回字缝大的 Maple，从 dock 重开即恢复。**其它 Electron 应用（VS Code / QQ）维持原样**。
+- **曾经的全局方案（2026-09-17 撤销，留档）**：`~/.config/fontconfig/conf.d/51-cjk-fallback.conf`（`PingFang SC` + `Noto Sans CJK SC`），脚本存（本地笔记存档）。**注意若写 `fonts.conf` 会被 `omarchy font set` 的 `cat >` 抹掉**，要全局就该用 conf.d。
+- **⚠️ 别用 `<test name="charset" compare="contains">` + 大范围**：语义是「pattern 的 charset 必须**包含整个** test 集合」，单字 pattern 对 CJK 区间恒为假 → 规则永不触发。
+- **改完必须重启应用**：Chromium 进程内缓存 fontconfig 结果，热改配置对已开着的 Discord/VS Code/QQ 无效。
+
+## 十二、fontconfig 别名劫持所有字体名
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+`~/.config/fontconfig/fonts.conf` 里那条把 `monospace` 指向 `GoogleSansCode Material` 的规则（为让 bar/UI 图标吃到改造过的 Material 字形，见 `material-symbols-bar-icons`），**实际会命中几乎所有字体查询**，不只是 monospace。
+
+实测（2026-09-17）：
+
+| 命令 | 结果 |
+|---|---|
+| `fc-match "JetBrainsMono Nerd Font"` | `GoogleSansCodeMaterial-Regular.ttf`（不是 JetBrains） |
+| `fc-match -s "JetBrainsMono Nerd Font" \| head -1` | 同上，GSC Material 被插到第一位 |
+| `XDG_CONFIG_HOME=/tmp/fcx fc-match "JetBrainsMono Nerd Font"` | 正常返回 JetBrains → 证明是用户配置的锅 |
+| 把规则里的 `monospace` 改成不存在的族名 | 劫持消失 |
+
+**机制**：fontconfig 会给每个 pattern 追加通用族名（sans-serif / serif / monospace）作 fallback，于是 `<test name="family"><string>monospace</string></test>` 对几乎任何查询都为真，`prepend_first` 就把 GSC Material 插到最前。
+
+**后果**：任何应用按族名指定字体都会被静默替换——CSS 的 `font-family: "JetBrainsMono Nerd Font"`、ghostty 的 `font-family`（它配的是 `GoogleSansCode Nerd Font`）都一样。表现为"换了字体但画面没变"。
+
+**绕开**：CSS 里用 `@font-face` + `src: url("file:///绝对路径.ttf")` 直指字体文件，不经过族名解析（ColaMD 代码块就是这么修的，见（本地笔记存档） §3.4）。
+
+**未做**：规则本身没改——它同时供养着 bar/UI 的 Material 图标，直接删会让图标回退。要收窄成"只对 monospace 生效"，得先搞清 fontconfig 的 pattern 处理顺序；`<alias><prefer>` 写法在本机实测**不生效**（与 `omarchy-fontconfig-chain` 里记录的 `prepend` 空转一致）。
+
+**2026-09-17 决定：不收窄、维持现状**（用户选择"看着看着就习惯了"）。**别再提议改这条规则**；要换某处字体的写法就是 `@font-face` 直指文件。
+
+**How to apply**: 本机遇到「明明指定了字体却没变化」，先 `fc-match "<字体名>"`——返回 GoogleSansCodeMaterial 就是它；换字体优先用 `@font-face` 文件路径绕过。
+
+## 十三、整条 bar 悬浮 + QML 视觉改动的无视觉验证
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+
+用户问「bar 能不能像 KDE 那样鼠标移过去有浮动动画」，并把目标描述为 **「整个 bar 悬浮效果」**、明确说 **不是** 我当时做的窗口缩略图预览（原话「歪了」「不要听风就是雨」）。
+
+**已核实的事实**：本机 bar **本来就是悬浮的**——屏幕 2400×1350，bar 图层在 `10,10 2380×47`，四周 10px 缝 + 圆角。即 Plasma 的 "floating panel" 形态本机已具备。
+
+**未决**：到底是 ①「鼠标悬停时整条 bar 抬起/位移」还是 ②「看着不够浮＝缺投影阴影」。开工前必须问清，别再自己猜一个方向就写代码。
+- 已知障碍：layer-surface 高度只有 `barSize`(40)，"内缩+阴影"会破坏 `Bar.qml` 布局 → 阴影此前结论是「做不了、已放弃」（见（本地笔记存档） §3.2②）。
+- 整条 bar 悬停状态**已存在**：`Bar.qml` 的 `setBarHovered()` / `barHovered`（靠 1199 行 HoverHandler，只有一处在用），要加整条 bar 的悬停动效从这里接，别新造。
+
+# ⚠️ 已回滚（2026-09-11）
+
+我曾给 `Bar.qml` 的 `ModuleSlot` 加过「图标悬停高亮块 + `scale: 1.35`」，**已按用户要求全部回滚**（`diff Bar.qml.bak.hover.1789141013 Bar.qml` 为空）。别把它当现状。
+- 那个 `ModuleSlot` 里有个**从未被使用的** `HoverHandler { id: moduleHover }` + `hovered` 属性——将来要接「鼠标移上去有反应」可从那儿接。
+- 相关数字（高亮 `Util.alpha(barForeground, 0.26)`、scale 1.35、OutQuad 110ms）来自 plasma-desktop MR !3620 的社区讨论，**不是 Plasma 默认行为**，别再引用为「Plasma 就是这样」。
+
+# QML 坑：PopupCard 的默认属性只收 Item
+
+**往 `PopupCard { ... }` 里直接放 `Timer`/`Connections` 等非 Item 对象 → 整个组件加载失败**，报 `Cannot assign object of type "QQmlTimer" to list property "contentItem"`。
+- 症状极具误导性：**静默功能全无**（悬停「没反应」），只有翻 journal 才看得到 `Plugin widget <id> failed:`。
+- 调试 Timer 一律放到组件**外面**。排查这类「改了没反应」先 `journalctl -t omarchy-shell | grep "Plugin widget"`。
+
+# 不用眼睛验证 Quickshell 视觉改动（无 vision 时）
+
+1. **截图**：`grim -g "<逻辑 x>,<逻辑 y> <逻辑 w>x<逻辑 h>"`。hyprctl 报的 monitor width 是物理，**layer 几何是逻辑**（本机 bar = `10,10 2380x47`，scale 1.6）。用 `hyprctl layers` 拿真实几何。
+2. **移光标**：`hyprctl dispatch 'hl.dsp.cursor.move({x=75,y=33})'`（旧语法报 `')' expected`）。
+   - ⚠️ **光标会被用户或 compositor 抢走/吸附**，实测请求 (500,500) 落在 (507,491)、请求 (1000,700) 落在 (791,631)。**别把自动化光标当作可靠定位手段**，用户在场时尤其不可靠。
+3. **比较**：`magick a.png b.png -compose difference -composite -format "%[fx:maxima*255] %@" info:`
+   - **别用 `-scale Wx1!` 列聚合**：会把缩放的细边缘平均掉（实测真实差异 175 被稀释成 6，导致误判"没生效"）。
+   - ⚠️ **动态画面会让比差失真**：全屏视频/动画下任何两帧都有巨大差异（实测基线噪声 RMSE 0.04、max 达 139）。比差前先确保画面静态。
+   - ⚠️ **半透明 bar 下透出壁纸**，像素分析（找特定颜色）基本不可用。
+4. **先确认没有全屏窗口**：Hyprland 有 fullscreen 时把 bar 图层 alpha 归 0（`hyprctl layers` 显示 `a: 0`），此时 bar 截图/悬停**全部无效**，会得出"改了没反应"的假结论。先 `hyprctl activewindow -j` 看 `fullscreen`（2=全屏，藏 bar）。
+5. **切换全屏的 dispatch 是 toggle 而非关闭**：`hl.dsp.window.fullscreen()` 会把 fullscreen 2→0、再调一次 0→2。自动化里必须**先读状态再决定是否调用**，否则会把用户窗口切来切去。
+6. **生效时机**：omarchy 监听插件目录（journal: `Local plugin changed, reloading: <id>`）。⚠️ **热重载不一定重建组件实例**（实测日志出现了但新代码没跑）；要确认改动真的生效，**用 `omarchy restart shell`**。
+7. **日志**：`journalctl -t omarchy-shell -n 30 --no-pager`；另起测试实例：`quickshell -p /tmp/qstest`（不同 config 路径＝独立实例，不干扰主 shell）。
+
+# 顺带：Quickshell 能抓单窗口画面（已实测，机制有效）
+
+`Quickshell.Wayland._Screencopy/ScreencopyView`：`captureSource`（塞 Toplevel）、`live: true`、`hasContent`/`sourceSize`。Hyprland 0.56.2（PR #11709）支持 ext-image-copy-capture。实测每窗口抓到尺寸与 `clients -j` 的 `size×1.6` **精确相等**（ghostty 1837×2024、zen 3787×2024）。**不需要 portal**。
+- ⚠️ 被遮挡/不在当前工作区的窗口抓不到（`hasContent=false`，两次复现）。
+- ⚠️ `width/height` 给 1×1 或 `live:false` 会失败 → 必须正常尺寸 + `live:true`，否则误判成"协议不支持"。
+- 此机制当前**未被采用**（属于被回滚的那条错方向）。
+
+## 十四、Qt 6.12 Color 单例撞 omarchy shell
+
+> 并入自 agent memory（2026-10-16）；数字与结论为当时实测。
+
+
+
+**症状**（2026-10-09 首次遇到）：shell 里凡是用 `Color.xxx` 取色的地方全变成 undefined —— 浮动 bar 没有配色、
+点 bar 上 arch/omarchy logo 后**整个屏幕变黑只剩鼠标**（菜单的 overlay 层 `anchors.fill: parent; color: root.scrim`
+拿到 undefined，按无效色画成黑，卡片本身也看不见）。`Style.*`（尺寸/字体）正常，所以不像是全盘崩。
+
+**根因**：Qt 6.12 给 `QtQuick` 加了**新增单例 `Color`**（官方文档：Color QML Type (Singleton)，Import Statement
+`import QtQuick`，Since Qt 6.12），与 omarchy 自己的 `qs.Commons` `Color` 单例**同名**。QML 名字解析时 QtQuick 的赢
+（实测与 qmldir 版本号、import 先后顺序都无关），于是 shell 里裸写的 `Color.bar` / `Color.menu` / `Color.notifications`
+全部落到 QtQuick 那个只有 `darker/lighter/tint/blend/fromString/...` 方法的对象上 → 一律 undefined。
+
+**判定是不是这个锅（别被"插件不兼容"带跑）**：
+
+```bash
+# 1) QtQuick 是否导出 Color（有 exports: ["QtQuick/Color 6.12"] 就是它）
+grep -n 'QtQuick/Color' /usr/lib/qt6/qml/QtQuick/plugins.qmltypes
+# 2) 裸名 vs 限定访问（探针：qs -n -p <dir>，见下）
+#    裸 Color.foreground = undefined，但 import qs.Commons as C 后 C.Color.foreground = "#cacccc"
+# 3) 是不是刚升级（`qt6-declarative` 6.11.x -> 6.12.0）
+grep qt6-declarative /var/log/pacman.log | tail
+# 4) shell 侧的指纹报错：Cannot read property '*.background|*.text|*.scrim|*.border' of undefined
+journalctl --since today | grep -iE "omarchy-shell.*(Border.qml|NotificationCard|Menu.qml)"
+```
+
+**要点**：omarchy 自家的 `NotificationCard.qml`、`@Commons/Border.qml` 都在报同一类错 → **与浮动 bar 插件无关**，
+插件只是受害者（本机 `charlieras262.floating-bar` 一共只有 14 处 `Color.` 引用）。
+限定导入（`import qs.Commons as C` + `C.Color.*`）是**验证过的**绕法，但要求改所有引用处。
+
+**2026-10-09 实际处置（已生效，配好后重启验证）**：那次更新（01:09:23）**一次动了 9 个包**——
+`qt6-base` 6.11.2-3→**6.12.0-2**、`qt6-declarative` 6.11.2-2→**6.12.0-1**、svg/shadertools/wayland/5compat/imageformats/multimedia/multimedia-ffmpeg 全 6.11.2-1→6.12.0-1、外加 **`quickshell` 0.3.1-1→0.3.2-1**。
+**只退 declarative 不够**：`quickshell` 0.3.2 是按 6.12 编的，配 6.11.2 的 QtQml 会直接
+`symbol lookup error: libQt6Qml.so.6: undefined symbol: _ZN14QObjectPrivateC2E16QtPrivate_6_11_2, version Qt_6_PRIVATE_API`
+——连 `quickshell --version` 都 rc=127。反过来 6.11.2 的 QtQml 又需要同 minor 的 qt6-base（6.12 的 QtCore 不导出 6.11 的私有 API 标签），
+所以 **Qt6 必须整套同 minor**：9 个包全退回 6.11.2 + quickshell 0.3.1，缺一个都起不来。
+
+**判据（回滚前后各一次就够）**：`quickshell --version` 能打印版本 = Qt 栈自洽；再用探针
+`import QtQuick` + `import qs.Commons` 打 `Color.foreground`，`#cacccc` 表示 omarchy 的单例抢回来了。
+（排查 qmltypes 时注意别被 `ColorAnimation`/`ColorGroup`/`ColorSpace` 误命中。）
+
+**回滚后必做的完整性审计（踩过）**：只退 qt6 本体不够——**同一天被重编到 6.12 的第三方包会反向崩**。判据一条命令：
+
+```bash
+grep -rl 'Qt_6\.12' /usr/lib /usr/bin 2>/dev/null   # 必须为空
+# 非空 → 找出包名与缓存里的旧版，再 pacman -U：
+pacman -Qoq <该文件>;  ls /var/cache/pacman/pkg/ | grep -E '^<包名>-'
+```
+
+2026-10-09 实测被 6.12 重编的共 4 个（症状各不相同，别各查一遍）：
+`quickshell` 0.3.2（私有符号，shell 整个起不来）、`layer-shell-qt` 6.7.5-3
+（**PrintScreen 无效 = omasnap 起不来 = 它找不到 `Qt_6.12` 符号**，omasnap 是自带 layer-shell 选区浮层的独立二进制）、
+`fcitx5-qt` 5.1.16-2（Qt6 应用的输入法插件；不修则 Qt6 程序打不出中文）、`omakade` 1.15.0-2。四个都退回缓存旧版后 `grep` 才干净。
+
+**本机现状（最后核对：2026-11-13 · `omarchy 4.5.0-3`）**：`/etc/pacman.conf` **已无 `IgnorePkg`**，Qt 栈全部 6.12.0：
+`qt6-base 6.12.0-5`、`qt6-declarative 6.12.0-4`、svg/shadertools/wayland/5compat/imageformats/multimedia/multimedia-ffmpeg 均 `6.12.0-1`、
+`quickshell 0.3.2.r7.g2b4501a-1`、`layer-shell-qt 6.8.2-1`、`fcitx5-qt 5.1.16-2`、`omakade 1.17.0-1`。
+`pacman.conf` 备份在 `/etc/pacman.conf.bak-20261113`（回退时把 `IgnorePkg = ...` 行加回，再用 `/var/cache/pacman/pkg/` 里的 6.11.2 旧包 `pacman -U`）。
+
+**升级前置（第三方插件仍需要）**：omarchy 4.5.0-3 的 shell 已全量限定导入，但克隆/第三方插件不会自动改。本机在升级前给 `~/.config/omarchy/plugins` 下 **113 个 QML 文件、943 处裸 `Color.*`** 补了 `import qs.Commons as Commons` + `Commons.Color.*`；补丁前整目录备份在 `~/.cache/omarchy-plugins-pre-qt612-20261113.tar.gz`。锁屏本地设计 `~/.config/omarchy/lock-designs/{Card,SplitJianlong}.qml` 另补 **2 文件 / 21 处**（备份 `~/.cache/omarchy-lock-designs-pre-qt612-20261113.tar.gz`）；lock-explorer 的 `Designer.js` 默认 Custom QML 片段和 `DesignerItem.qml` 的 `createQmlObject` 包装也一并改成 `Commons.Color` + `import qs.Commons as Commons`，否则新建/编辑设计会再生成裸引用。以后新增或更新插件若仍写裸 `Color.`，按同一变换处理（只改引用，不动 `qs.Commons` 的单例名）。
+
+**升级后的验收**：
+1. `quickshell --version` 必须打印 `Quickshell 0.3.2 ...`；rc=127 或 `symbol lookup error` = Qt 栈仍混版本。
+2. Color 探针（临时 config 同时 `import qs.Commons` 与 `import qs.Commons as Commons`）：Qt 6.12 下裸 `Color.foreground` = **undefined**、`Commons.Color.foreground` = **`#cacccc`** 才正常；裸名也拿到颜色说明 QtQuick 单例没生效。
+3. `grep -n 'QtQuick/Color' /usr/lib/qt6/qml/QtQuick/plugins.qmltypes` 应命中 `exports: ["QtQuick/Color 6.12"]`。
+4. `ldd` 审计：`grep -rl 'Qt_6\.12' /usr/lib /usr/bin` **升级后非空是正常的**（大量包已按 6.12 重编）；判据改成逐个 `ldd` 不出现 `version 'Qt_6.12' not found`。剩余 `not found` 若是 Firebird/ODBC/Botan/Plasma/Quick3D 等可选后端，属未装的 optional deps，不是 Qt 故障。
+5. `omarchy restart shell` 后按新 PID 查 journal，无 `Color is not defined` / `Cannot read property '*.foreground' of null`；`grim` 截屏确认浮栏和菜单有配色；锁屏用 `omarchy-shell lock previewDesign <id>` 全屏预览、`omarchy-shell lock hidePreview` 关闭（不用真锁屏），预览里时钟/头像/密码框都有颜色即正常。用户设计还要过 `LockHost.userDesigns`（见 `omarchy-plugins.md` §8.1 的 `lock-explorer-user-designs.patch`），否则会回落默认 Card。
+
+**直接 pacman 的拦截**：`/usr/share/omarchy/default/libalpm/hooks/00-omarchy-update-guard.hook` 会 abort 直接 `pacman -Syu`。定向升级 Qt 这类事务按 hook 提示走
+`pkexec env OMARCHY_ALLOW_DIRECT_PACMAN=1 pacman -Syu`；日常整机更新仍走 `omarchy update`。
+
+**可选修法**（未采用，留档）：限定导入（`import qs.Commons as C` + `C.Color.*`）是**验证过的**绕法，但要求改所有引用处
+（omarchy 自家 shell 数百处；本机 `charlieras262.floating-bar` 只有 14 处，可作小范围应急）。
+
+**上游状态**（最后核对 2026-11-13，本机 `omarchy 4.5.0-3`）：
+
+| 项 | 状态 |
+|---|---|
+| `quattro`（默认分支） | **已修**：PR #14553 把 shell 全量改成 `import qs.Commons as Commons` + `Commons.Color.*`；单例没改名，`/usr/share/omarchy/shell/Commons/qmldir` 仍是 `singleton Color 1.0 Color.qml` |
+| 发版 | **已到**：`omarchy 4.5.0-3`（构建 2026-11-05）已装，shell 内裸 `Color.` 实测 **0** 处 |
+| 已解锁的包版本 | `qt6-base 6.12.0-5`、`qt6-declarative 6.12.0-4`、`quickshell 0.3.2.r7.g2b4501a-1`、`layer-shell-qt 6.8.2-1`、`fcitx5-qt 5.1.16-2`、`omakade 1.17.0-1` |
+| 第三方插件 | 仍需各自限定导入；本机已补 113 文件 / 943 处，备份见上 |
+
+核实法：`pacman -Q omarchy qt6-base qt6-declarative quickshell layer-shell-qt fcitx5-qt omakade`；`grep -rP '(?<![.\w$])Color\.[a-z]' /usr/share/omarchy/shell --include=*.qml | wc -l` 应为 `0`；`ls /etc/pacman.conf.bak-20261113`。
+
+**本机策略**：Qt 6.12 已解锁，Qt 小版本仍整套同升，别只升 `qt6-declarative`；日常整机更新走 `omarchy update`。
+
+**顺带**：本次事故同时段还看到 ghostty（`io` 线程 SEGV、历史反复）与 zen（libxul）崩溃，与 Color 无关，别混为一谈。
 ## 总结
 
 | 章 | 要点 |
@@ -1066,5 +1345,9 @@ XDG_CONFIG_HOME=/tmp/try env -u GTK_THEME python3 rig.py
 | 八 字体链 | **已失效存档**：SF Mono + 苹方那条链的 conf 已删。现状 `monospace` → `GoogleSansCode Material`（见 §1.3）。机制部分（fontconfig `assign` 抢不回来）仍成立 |
 | 九 flea | 别改共享的 Style（会连带 bar）；`cp -rL` 一份副本到 `~/.local/share/flea`，用 `FLEA_UI` 指过去 |
 | 十 GTK 应用 | omarchy 官方**没有** gtk 模板（ghostty 等 19 个才有）→ GTK 默认只拿 `Adwaita-dark`，不跟主题。补法：**两份**主题模板（`gtk.css.tpl` 给 GTK4 用 `@define-color`；`gtk3.css.tpl` 给 GTK3 只能全用**显式选择器**）+ hook 同步到 `~/.config/gtk-4.0/` 与 `~/.config/gtk-3.0/`。**`GTK_THEME` 会压死 `@define-color`（必须先删）；`!important` 不存在；GTK3 还额外要用 `background-image: none` 和 `box-shadow` 同形覆盖才盖得住 Adwaita**。接口字体 `font-name` **是 pt 不是 px**：`SF Pro 9` = 14px，对齐 bar |
+| 十一 字体链 | 终端字体（写在 ghostty/alacritty 配置里）与 fontconfig/bar 字体（`monospace` 别名）是**两套机制**；用户级规则的 `mode` 只有 `prepend_first` 真生效；验证只认 renderer 进程 mmap 的字体 |
+| 十二 fontconfig 劫持 | 别名规则命中一切字体名请求 → **按族名换字体＝白换**；绕开＝CSS `@font-face` + `file://` 直指字体文件 |
+| 十三 bar 悬浮 / QML 验证 | 「整条 bar 悬浮」的需求**尚未确定 → 先问再做**；`PopupCard` 里放 Timer 会让组件静默加载失败；无 vision 时的视觉验证＝`grim`＋maxdiff |
+| 十四 Qt 6.12 Color 单例 | **bar 没配色 / 点 arch logo 只剩鼠标＝Qt 6.12 的同名 `Color` 单例挤掉了 `qs.Commons.Color`**；本机已升 Qt 6.12（上游 shell 已限定导入），第三方插件需补 `Commons.Color.*`，验收见 §14 |
 
 **贯穿全篇的一条准则**：任何想跟窗口视觉一致的 surface 边框，都去**镜映窗口的同源参数**（颜色取 matugen 的 active-border、宽度取 Hyprland `border_size`），别自己写一套色和宽度。

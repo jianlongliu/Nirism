@@ -1,0 +1,16 @@
+{
+  "webSuggestions": false,
+  "currencyRates": true,
+  "searchEngine": "g",
+  "defaultCurrency": "",
+  "fileSearch": true,
+  "fileSearchAlways": true,
+  "clipboardSearch": true,
+  "learningEnabled": true,
+  "aiEnabled": false,
+  "aiProvider": "claude",
+  "aiModel": "",
+  "aiEffort": "",
+  "aiWebSearch": false,
+  "setupCompleted": true
+}

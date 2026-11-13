@@ -1,5 +1,6 @@
 {
   "bar": {
+    "background": "opaque",
     "borderRing": false,
     "centerAnchor": "omarchy.clock",
     "id": "charlieras262.floating-bar",
@@ -23,10 +24,39 @@
           "id": "jianlongliu.keyboard-layout"
         },
         {
-          "id": "omarchy.clock"
+          "id": "omarchy.clock",
+          "format": "ddd d MMM HH:mm"
+        },
+        {
+          "id": "omarchy.elsewhen",
+          "cities": [
+            {
+              "name": "Chongqing",
+              "zone": "Asia/Chongqing"
+            },
+            {
+              "name": "Los Angeles",
+              "zone": "America/Los_Angeles"
+            },
+            {
+              "name": "New York",
+              "zone": "America/New_York"
+            },
+            {
+              "name": "London",
+              "zone": "Europe/London"
+            },
+            {
+              "name": "Dubai",
+              "zone": "Asia/Dubai"
+            }
+          ]
         },
         {
           "id": "omarchy.weather"
+        },
+        {
+          "id": "omaoutlook"
         },
         {
           "id": "omarchy.power"
@@ -41,6 +71,8 @@
           "id": "jianlongliu.system-update"
         }
       ],
+      "centerBegin": [],
+      "centerEnd": [],
       "left": [
         {
           "id": "jianlongliu.arch-logo"
@@ -52,8 +84,9 @@
           "id": "omarchy.active-window"
         },
         {
-          "barDisplay": "Data",
+          "barDisplay": "Icon",
           "defaultSub": "commandcode",
+          "dsPeakClock": false,
           "hermesEnvFile": "~/.zshenv",
           "id": "meviusisback.ai-subs"
         }
@@ -85,6 +118,9 @@
           "id": "omarchy.tray"
         },
         {
+          "id": "flux"
+        },
+        {
           "id": "ronald.input-sources",
           "showSourceName": false
         },
@@ -103,10 +139,10 @@
         {
           "id": "omarchy-system-menu"
         }
-      ]
+      ],
+      "tray": []
     },
-    "position": "top",
-    "transparent": false
+    "position": "top"
   },
   "cloneSourceRestores": [
     "io.github.sirjul1337.lock-explorer",
@@ -123,9 +159,9 @@
   },
   "plugins": [
     {
-      "id": "io.github.sirjul1337.lock-explorer",
+      "boot": "follow",
       "design": "my-splitjianlong",
-      "boot": "follow"
+      "id": "io.github.sirjul1337.lock-explorer"
     },
     {
       "id": "io.github.jonhenshaw.voxtype-prism"
@@ -147,6 +183,9 @@
     },
     {
       "id": "io.github.mtolhuys.fathom"
+    },
+    {
+      "id": "omakade.guide"
     }
   ],
   "version": 1
